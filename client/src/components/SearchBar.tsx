@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Sliders } from 'lucide-react';
+import { Search, Sliders, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -44,7 +44,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
     <form onSubmit={handleSubmit} className="w-full">
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-visible">
         {/* Main search row */}
-        <div className="flex items-center px-4 py-3 gap-3 relative">
+        <div className="flex items-center px-4 py-3 gap-2 relative">
           <Search className="text-gray-400 shrink-0" size={20} />
           <div className="relative flex-1">
             <input
@@ -58,12 +58,27 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
               onFocus={() => setShowSuggestions(true)}
               onClick={(e) => e.stopPropagation()}
               placeholder="Enter city name…"
-              className="w-full text-gray-900 placeholder-gray-400 text-base outline-none bg-transparent"
+              className="w-full text-gray-900 placeholder-gray-400 text-base outline-none bg-transparent pr-8"
               autoComplete="off"
+              inputMode="search"
             />
+            {city && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCity('');
+                  setShowSuggestions(false);
+                  inputRef.current?.focus();
+                }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600"
+                aria-label="Clear search"
+              >
+                <X size={16} />
+              </button>
+            )}
             {/* Autocomplete dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto">
                 {suggestions.map((s) => (
                   <button
                     key={s}
@@ -72,43 +87,44 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                       e.stopPropagation();
                       handleSuggestionSelect(s);
                     }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    className="w-full text-left px-4 py-3 text-base text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   >
-                    <Search size={14} className="text-gray-400" />
+                    <Search size={16} className="text-gray-400" />
                     {s}
                   </button>
                 ))}
-</div>
+              </div>
             )}
-           </div>
-           <button
-             type="button"
-             onClick={() => setShowOptions(!showOptions)}
-             className={cn(
-               'p-2 rounded-lg transition-colors',
-               showOptions ? 'bg-ev-100 text-ev-600' : 'text-gray-400 hover:bg-gray-100',
-             )}
-             title="Search options"
-           >
-             <Sliders size={18} />
-           </button>
-           <button
-             type="submit"
-             disabled={isLoading || !city.trim()}
-             className={cn(
-               'px-5 py-2 rounded-xl font-semibold text-sm transition-all',
-               isLoading || !city.trim()
-                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                 : 'bg-ev-600 text-white hover:bg-ev-700 active:scale-95',
-             )}
-           >
-             {isLoading ? 'Searching…' : 'Search'}
-           </button>
-         </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowOptions(!showOptions)}
+            className={cn(
+              'p-2.5 rounded-lg transition-colors shrink-0',
+              showOptions ? 'bg-ev-100 text-ev-600' : 'text-gray-400 hover:bg-gray-100',
+            )}
+            title="Search options"
+            aria-label="Toggle search options"
+          >
+            <Sliders size={20} />
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading || !city.trim()}
+            className={cn(
+              'px-5 py-2.5 rounded-xl font-semibold text-base transition-all shrink-0',
+              isLoading || !city.trim()
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-ev-600 text-white hover:bg-ev-700 active:bg-ev-800',
+            )}
+          >
+            {isLoading ? 'Searching…' : 'Search'}
+          </button>
+        </div>
 
         {/* Options panel */}
         {showOptions && (
-          <div className="border-t border-gray-100 px-4 py-4 grid grid-cols-2 gap-6">
+          <div className="border-t border-gray-100 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="text-xs font-medium text-gray-500 block mb-2">
                 Search radius: <span className="text-gray-900 font-semibold">{distance} km</span>
@@ -120,7 +136,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                 step={1}
                 value={distance}
                 onChange={(e) => setDistance(Number(e.target.value))}
-                className="w-full accent-ev-600"
+                className="w-full accent-ev-600 h-5"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>1 km</span><span>100 km</span>
@@ -137,13 +153,13 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                 step={5}
                 value={maxResults}
                 onChange={(e) => setMaxResults(Number(e.target.value))}
-                className="w-full accent-ev-600"
+                className="w-full accent-ev-600 h-5"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>5</span><span>100</span>
               </div>
             </div>
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               <label className="text-xs font-medium text-gray-500 block mb-2">
                 Operator (optional)
               </label>
@@ -152,7 +168,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                 value={operator}
                 onChange={(e) => setOperator(e.target.value)}
                 placeholder="Filter by operator name…"
-                className="w-full text-gray-900 placeholder-gray-400 text-base outline-none bg-transparent border border-gray-200 rounded-lg px-3 py-2"
+                className="w-full text-gray-900 placeholder-gray-400 text-base outline-none bg-transparent border border-gray-200 rounded-lg px-3 py-2.5"
               />
             </div>
           </div>

@@ -9,7 +9,7 @@ import { historyRouter } from './routes/history.js';
 const app = express();
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 
-app.use(cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173' }));
+app.use(cors({ origin: process.env.CORS_ORIGIN === '*' ? true : (process.env.CORS_ORIGIN ?? 'http://localhost:5173') }));
 app.use(express.json());
 
 // Health check
@@ -35,6 +35,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 initDb();
 
-app.listen(PORT, () => {
-  console.log(`⚡ EV Charging Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`⚡ EV Charging Server running on http://0.0.0.0:${PORT}`);
+  console.log(`Access from mobile: http://[your-ip]:${PORT}`);
 });

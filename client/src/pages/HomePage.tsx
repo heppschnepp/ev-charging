@@ -60,8 +60,8 @@ export function HomePage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
-          <div className="flex items-center gap-2.5">
+        <div className="px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center gap-2.5 mb-4">
             <div className="w-9 h-9 rounded-xl bg-ev-600 flex items-center justify-center">
               <Zap size={20} className="text-white" />
             </div>
@@ -70,18 +70,16 @@ export function HomePage() {
               <p className="text-xs text-gray-400 leading-none mt-0.5">Powered by Open Charge Map</p>
             </div>
           </div>
-          <div className="flex-1 max-w-xl ml-4">
-            <SearchBar
-              onSearch={handleSearch}
-              isLoading={isLoading}
-              history={historyCities}
-            />
-          </div>
+          <SearchBar
+            onSearch={handleSearch}
+            isLoading={isLoading}
+            history={historyCities}
+          />
         </div>
       </header>
 
       {/* Body */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-8">
           {/* Results */}
           <div className="flex-1 min-w-0 space-y-5">
