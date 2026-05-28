@@ -16,11 +16,11 @@ export const api = {
   stations: {
     search: (city: string, distance: number, maxResults: number, operator?: string): Promise<SearchResult> => {
       const params = new URLSearchParams({
-        city: encodeURIComponent(city),
+        city,
         distance: String(distance),
         maxResults: String(maxResults),
       });
-      if (operator) params.set('operator', encodeURIComponent(operator));
+      if (operator) params.set('operator', operator);
       return request(`/stations/search?${params.toString()}`);
     },
   },

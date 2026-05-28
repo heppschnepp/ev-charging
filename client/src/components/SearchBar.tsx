@@ -28,6 +28,12 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
     onSearch(city.trim(), distance, maxResults, operator.trim() || undefined);
   };
 
+  const handleSuggestionSelect = (s: string) => {
+    setCity(s);
+    setShowSuggestions(false);
+    onSearch(s, distance, maxResults, operator.trim() || undefined);
+  };
+
   useEffect(() => {
     const handleClick = () => setShowSuggestions(false);
     document.addEventListener('click', handleClick);
@@ -64,9 +70,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setCity(s);
-                      setShowSuggestions(false);
-                      onSearch(s, distance, maxResults, operator.trim() || undefined);
+                      handleSuggestionSelect(s);
                     }}
                     className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   >
@@ -74,33 +78,33 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                     {s}
                   </button>
                 ))}
-              </div>
+</div>
             )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowOptions(!showOptions)}
-            className={cn(
-              'p-2 rounded-lg transition-colors',
-              showOptions ? 'bg-ev-100 text-ev-600' : 'text-gray-400 hover:bg-gray-100',
-            )}
-            title="Search options"
-          >
-            <Sliders size={18} />
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading || !city.trim()}
-            className={cn(
-              'px-5 py-2 rounded-xl font-semibold text-sm transition-all',
-              isLoading || !city.trim()
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-ev-600 text-white hover:bg-ev-700 active:scale-95',
-            )}
-          >
-            {isLoading ? 'Searching…' : 'Search'}
-          </button>
-        </div>
+           </div>
+           <button
+             type="button"
+             onClick={() => setShowOptions(!showOptions)}
+             className={cn(
+               'p-2 rounded-lg transition-colors',
+               showOptions ? 'bg-ev-100 text-ev-600' : 'text-gray-400 hover:bg-gray-100',
+             )}
+             title="Search options"
+           >
+             <Sliders size={18} />
+           </button>
+           <button
+             type="submit"
+             disabled={isLoading || !city.trim()}
+             className={cn(
+               'px-5 py-2 rounded-xl font-semibold text-sm transition-all',
+               isLoading || !city.trim()
+                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                 : 'bg-ev-600 text-white hover:bg-ev-700 active:scale-95',
+             )}
+           >
+             {isLoading ? 'Searching…' : 'Search'}
+           </button>
+         </div>
 
         {/* Options panel */}
         {showOptions && (

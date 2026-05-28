@@ -59,6 +59,10 @@ export function initDb() {
     );
   `);
 
+  // Clear stale cache entries on startup (older than 1 hour)
+  db.prepare(`DELETE FROM geocode_cache WHERE cached_at < datetime('now', '-1 hour')`).run();
+  db.prepare(`DELETE FROM station_cache WHERE cached_at < datetime('now', '-1 hour')`).run();
+
   console.log('✅ Database initialised at', DB_PATH);
 }
 
@@ -70,9 +74,9 @@ export function getCachedGeocode(city: string) {
     .prepare(
       `SELECT * FROM geocode_cache
        WHERE lower(city) = lower(?)
-       AND (unixepoch('now') - unixepoch(cached_at)) < ?`,
+       AND cached_at >= datetime('now', '-1 hour')`,
     )
-    .get(city, CACHE_TTL) as
+    .get(city) as
     | { lat: number; lon: number; display_name: string; cached_at: string }
     | undefined;
   return row ?? null;
@@ -95,9 +99,9 @@ export function getCachedStations(
     .prepare(
       `SELECT data, cached_at FROM station_cache
        WHERE cache_key = ?
-       AND (unixepoch('now') - unixepoch(cached_at)) < ?`,
+       AND cached_at >= datetime('now', '-1 hour')`,
     )
-    .get(key, CACHE_TTL) as { data: string; cached_at: string } | undefined;
+    .get(key) as { data: string; cached_at: string } | undefined;
   return row ?? null;
 }
 

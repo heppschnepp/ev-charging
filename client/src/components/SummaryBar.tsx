@@ -5,10 +5,9 @@ import { isFastCharger } from '@/lib/utils';
 interface Props {
   stations: ChargingStation[];
   location: { displayName: string };
-  cachedAt?: string;
 }
 
-export function SummaryBar({ stations, location, cachedAt }: Props) {
+export function SummaryBar({ stations, location }: Props) {
   const operational = stations.filter((s) => s.isOperational === true).length;
   const fastCount = stations.filter(isFastCharger).length;
   const totalConnectors = stations.reduce((sum, s) => sum + s.connections.length, 0);
@@ -29,11 +28,6 @@ export function SummaryBar({ stations, location, cachedAt }: Props) {
           <MapPin size={16} className="text-ev-600" />
           <span className="font-semibold text-gray-900">{city}</span>
         </div>
-        {cachedAt && (
-          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-            cached
-          </span>
-        )}
       </div>
       <div className="grid grid-cols-4 gap-2">
         {stats.map(({ icon: Icon, label, value, color }) => (

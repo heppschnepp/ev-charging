@@ -38,7 +38,6 @@ cp server/.env.example server/.env
 ```
 
 ### Development
-
 ```bash
 # Start both client (port 5173) and server (port 3001)
 pnpm dev
@@ -46,6 +45,22 @@ pnpm dev
 # Or individually:
 pnpm client:dev
 pnpm server:dev
+```
+
+### Stop servers
+```bash
+# Stop all dev processes
+# macOS/Linux
+pkill -f "tsx watch" && pkill -f "vite"
+
+# Kill process on specific port (macOS)
+lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+
+# Kill processes on ports 3001 and 5173 (macOS)
+lsof -ti:3001,5173 | xargs kill -9 2>/dev/null || true
+
+# Windows PowerShell - Kill processes on ports
+Get-Process -Id (Get-NetTCPConnection -LocalPort 3001,5173 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force
 ```
 
 ### Production build

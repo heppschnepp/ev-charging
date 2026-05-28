@@ -2,8 +2,6 @@ import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
 import type { ChargingStation } from '../types/index.js';
 import {
-  getCachedGeocode,
-  setCachedGeocode,
   getCachedStations,
   setCachedStations,
   addSearchHistory,
@@ -28,15 +26,14 @@ stationsRouter.get('/search', async (req, res) => {
   const { city, distance, maxResults, operator } = parsed.data;
 
   try {
-    // 1. Geocode (with cache)
-    let geo = getCachedGeocode(city);
-    if (!geo) {
-      const result = await geocodeCity(city);
-      setCachedGeocode(city, result.lat, result.lon, result.displayName);
-      geo = { lat: result.lat, lon: result.lon, display_name: result.displayName, cached_at: new Date().toISOString() };
-    }
+    // 1. Geocode to get location options (always fresh for disambiguation)
+    const geocodeResults = await geocodeCity(city);
+    const primary = geocodeResults[0];
+    
+    // Use first result as default (placeId selection would require passing it from client)
+    const selected = primary;
 
-    // 2. Fetch stations (with cache)
+    // 2. Check station cache with selected coordinates
     let stations: ChargingStation[];
     let cachedAt: string | undefined;
     const cached = getCachedStations(city, distance, maxResults);
@@ -44,9 +41,9 @@ stationsRouter.get('/search', async (req, res) => {
       stations = JSON.parse(cached.data);
       cachedAt = cached.cached_at;
     } else {
-      stations = await fetchStations(geo.lat, geo.lon, distance, maxResults);
-      setCachedStations(city, geo.lat, geo.lon, distance, maxResults, JSON.stringify(stations));
-      addSearchHistory(city, geo.lat, geo.lon, distance, stations.length);
+      stations = await fetchStations(selected.lat, selected.lon, distance, maxResults);
+      setCachedStations(city, selected.lat, selected.lon, distance, maxResults, JSON.stringify(stations));
+      addSearchHistory(city, selected.lat, selected.lon, distance, stations.length);
     }
 
     // 3. Filter by operator (case-insensitive partial match) if provided
@@ -60,7 +57,7 @@ stationsRouter.get('/search', async (req, res) => {
     return res.json({
       stations,
       total: stations.length,
-      location: { lat: geo.lat, lon: geo.lon, displayName: geo.display_name },
+      location: { lat: selected.lat, lon: selected.lon, displayName: selected.displayName },
       cachedAt,
     });
   } catch (err) {

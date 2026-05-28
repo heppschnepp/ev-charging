@@ -60,3 +60,7 @@ export function getConnectorBadgeColor(title: string): string {
   if (t.includes('schuko') || t.includes('domestic')) return 'bg-gray-100 text-gray-700';
   return 'bg-gray-100 text-gray-700';
 }
+
+export function getTotalConnectors(station: ChargingStation): number {
+  return station.connections.reduce((sum, c) => sum + (c.quantity ?? 1), 0);
+}

@@ -112,8 +112,11 @@ export function HomePage() {
 
             {/* Results */}
             {data && !isLoading && (
-              <>
-                <SummaryBar stations={data.stations} location={data.location} cachedAt={data.cachedAt} />
+<>
+                 <SummaryBar
+                   stations={data.stations}
+                   location={data.location}
+                 />
                 <FilterBar active={activeFilter} onChange={setActiveFilter} counts={counts} />
 
                 {filtered.length === 0 ? (

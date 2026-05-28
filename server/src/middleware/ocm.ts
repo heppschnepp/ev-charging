@@ -4,19 +4,32 @@ const OCM_BASE = process.env.OCM_BASE_URL ?? 'https://api.openchargemap.io/v3';
 const OCM_KEY = process.env.OCM_API_KEY ?? '';
 const NOMINATIM_BASE = process.env.NOMINATIM_BASE_URL ?? 'https://nominatim.openstreetmap.org';
 
-export async function geocodeCity(city: string): Promise<GeoLocation> {
-  const url = `${NOMINATIM_BASE}/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
+interface GeoLocationOption {
+  lat: number;
+  lon: number;
+  displayName: string;
+  placeId?: number;
+}
+
+export async function geocodeCity(city: string): Promise<GeoLocationOption[]> {
+  const url = `${NOMINATIM_BASE}/search?q=${encodeURIComponent(city)}&format=json&limit=5`;
   const res = await fetch(url, {
     headers: { 'User-Agent': 'ev-charging-finder/1.0' },
   });
   if (!res.ok) throw new Error(`Geocoding failed: ${res.statusText}`);
-  const data = (await res.json()) as { lat: string; lon: string; display_name: string }[];
+  const data = (await res.json()) as {
+    lat: string;
+    lon: string;
+    display_name: string;
+    place_id: number;
+  }[];
   if (!data.length) throw new Error(`City not found: ${city}`);
-  return {
-    lat: parseFloat(data[0].lat),
-    lon: parseFloat(data[0].lon),
-    displayName: data[0].display_name,
-  };
+  return data.map((item) => ({
+    lat: parseFloat(item.lat),
+    lon: parseFloat(item.lon),
+    displayName: item.display_name,
+    placeId: item.place_id,
+  }));
 }
 
 interface OcmRaw {
