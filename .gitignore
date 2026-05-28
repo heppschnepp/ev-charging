@@ -53,6 +53,8 @@ coverage/
 # Server
 *.sqlite
 *.db
+*.db-shm
+*.db-wal
 
 # Vite
 .vite/
