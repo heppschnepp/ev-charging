@@ -70,6 +70,7 @@ export interface SearchParams {
   maxResults: number;
   minPowerKW?: number;
   operationalOnly?: boolean;
+  operator?: string;
 }
 
 export interface SearchResult {

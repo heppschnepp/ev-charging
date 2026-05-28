@@ -3,7 +3,7 @@ import { Search, Sliders } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onSearch: (city: string, distance: number, maxResults: number) => void;
+  onSearch: (city: string, distance: number, maxResults: number, operator?: string) => void;
   isLoading: boolean;
   history?: string[];
 }
@@ -12,6 +12,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
   const [city, setCity] = useState('');
   const [distance, setDistance] = useState(10);
   const [maxResults, setMaxResults] = useState(20);
+  const [operator, setOperator] = useState('');
   const [showOptions, setShowOptions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -24,7 +25,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
     e.preventDefault();
     if (!city.trim()) return;
     setShowSuggestions(false);
-    onSearch(city.trim(), distance, maxResults);
+    onSearch(city.trim(), distance, maxResults, operator.trim() || undefined);
   };
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                       e.stopPropagation();
                       setCity(s);
                       setShowSuggestions(false);
-                      onSearch(s, distance, maxResults);
+                      onSearch(s, distance, maxResults, operator.trim() || undefined);
                     }}
                     className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   >
@@ -137,6 +138,18 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
               <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>5</span><span>100</span>
               </div>
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-gray-500 block mb-2">
+                Operator (optional)
+              </label>
+              <input
+                type="text"
+                value={operator}
+                onChange={(e) => setOperator(e.target.value)}
+                placeholder="Filter by operator name…"
+                className="w-full text-gray-900 placeholder-gray-400 text-base outline-none bg-transparent border border-gray-200 rounded-lg px-3 py-2"
+              />
             </div>
           </div>
         )}

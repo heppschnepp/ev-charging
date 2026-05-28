@@ -14,8 +14,15 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   stations: {
-    search: (city: string, distance: number, maxResults: number): Promise<SearchResult> =>
-      request(`/stations/search?city=${encodeURIComponent(city)}&distance=${distance}&maxResults=${maxResults}`),
+    search: (city: string, distance: number, maxResults: number, operator?: string): Promise<SearchResult> => {
+      const params = new URLSearchParams({
+        city: encodeURIComponent(city),
+        distance: String(distance),
+        maxResults: String(maxResults),
+      });
+      if (operator) params.set('operator', encodeURIComponent(operator));
+      return request(`/stations/search?${params.toString()}`);
+    },
   },
 
   favorites: {

@@ -13,7 +13,7 @@ import type { FilterType } from '@/types';
 
 export function HomePage() {
   const [searchParams, setSearchParams] = useState<{
-    city: string; distance: number; maxResults: number; enabled: boolean;
+    city: string; distance: number; maxResults: number; operator?: string; enabled: boolean;
   }>({ city: '', distance: 10, maxResults: 20, enabled: false });
 
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
@@ -22,15 +22,16 @@ export function HomePage() {
     searchParams.city,
     searchParams.distance,
     searchParams.maxResults,
+    searchParams.operator,
     searchParams.enabled,
   );
 
   const { favorites, isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { data: history = [] } = useHistory();
 
-  const handleSearch = (city: string, distance: number, maxResults: number) => {
+  const handleSearch = (city: string, distance: number, maxResults: number, operator?: string) => {
     setActiveFilter('all');
-    setSearchParams({ city, distance, maxResults, enabled: true });
+    setSearchParams({ city, distance, maxResults, operator, enabled: true });
   };
 
   const handleHistorySelect = (city: string) => {

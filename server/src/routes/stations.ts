@@ -1,5 +1,6 @@
 import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
+import type { ChargingStation } from '../types/index.js';
 import {
   getCachedGeocode,
   setCachedGeocode,
@@ -15,6 +16,7 @@ const SearchSchema = z.object({
   city: z.string().min(1).max(100),
   distance: z.coerce.number().int().min(1).max(100).default(10),
   maxResults: z.coerce.number().int().min(1).max(100).default(20),
+  operator: z.string().optional(),
 });
 
 stationsRouter.get('/search', async (req, res) => {
@@ -23,7 +25,7 @@ stationsRouter.get('/search', async (req, res) => {
     return res.status(400).json({ message: 'Invalid parameters', code: 'INVALID_PARAMS', details: parsed.error.flatten() });
   }
 
-  const { city, distance, maxResults } = parsed.data;
+  const { city, distance, maxResults, operator } = parsed.data;
 
   try {
     // 1. Geocode (with cache)
@@ -35,7 +37,7 @@ stationsRouter.get('/search', async (req, res) => {
     }
 
     // 2. Fetch stations (with cache)
-    let stations;
+    let stations: ChargingStation[];
     let cachedAt: string | undefined;
     const cached = getCachedStations(city, distance, maxResults);
     if (cached) {
@@ -45,6 +47,14 @@ stationsRouter.get('/search', async (req, res) => {
       stations = await fetchStations(geo.lat, geo.lon, distance, maxResults);
       setCachedStations(city, geo.lat, geo.lon, distance, maxResults, JSON.stringify(stations));
       addSearchHistory(city, geo.lat, geo.lon, distance, stations.length);
+    }
+
+    // 3. Filter by operator (case-insensitive partial match) if provided
+    if (operator && operator.trim()) {
+      const operatorLower = operator.toLowerCase().trim();
+      stations = stations.filter((s) =>
+        s.operator?.title?.toLowerCase().includes(operatorLower)
+      );
     }
 
     return res.json({
