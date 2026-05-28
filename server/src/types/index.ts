@@ -60,6 +60,7 @@ export interface ChargingStation {
   numberOfPoints?: number;
   dateLastVerified?: string;
   dateLastStatusUpdate?: string;
+  usageCost?: string;
 }
 
 export interface SearchParams {

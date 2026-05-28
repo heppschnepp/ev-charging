@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import {
   MapPin, Zap, Phone, Globe, ChevronDown, Heart, Clock, Plug,
-  CheckCircle, AlertCircle, HelpCircle,
+  CheckCircle, AlertCircle, HelpCircle, Banknote,
 } from 'lucide-react';
 import type { ChargingStation } from '@/types';
 import {
   cn, getStationStatus, getMaxPower, isFastCharger,
   formatDistance, formatPower, formatDate, getConnectorBadgeColor,
 } from '@/lib/utils';
+
+function getTotalConnectors(station: ChargingStation): number {
+  return station.connections.reduce((sum, c) => sum + (c.quantity ?? 1), 0);
+}
 
 interface Props {
   station: ChargingStation;
@@ -29,8 +33,10 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
   const maxPower = getMaxPower(station);
   const fast = isFastCharger(station);
   const { addressInfo: addr, connections, operator } = station;
+  const { usageCost } = station;
 
   const addressStr = [addr.addressLine1, addr.town, addr.postcode].filter(Boolean).join(', ');
+  const totalConnectors = getTotalConnectors(station);
 
   return (
     <div
@@ -77,9 +83,9 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
                 <MapPin size={12} /> {formatDistance(addr.distance)}
               </span>
             )}
-            {connections.length > 0 && (
+            {connections.length > 0 && totalConnectors > 0 && (
               <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                <Plug size={12} /> {connections.length} connector{connections.length !== 1 ? 's' : ''}
+                <Plug size={12} /> {totalConnectors} connector{totalConnectors !== 1 ? 's' : ''}
               </span>
             )}
             {maxPower > 0 && (
@@ -183,6 +189,12 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
               <div>
                 <p className="text-xs text-gray-400 mb-1">Usage</p>
                 <p className="text-xs text-gray-700">{station.usageTypeTitle}</p>
+              </div>
+            )}
+            {station.usageCost && (
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Cost</p>
+                <p className="text-xs text-gray-700">{station.usageCost}</p>
               </div>
             )}
           </div>

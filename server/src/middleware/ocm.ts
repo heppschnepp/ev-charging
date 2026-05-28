@@ -60,6 +60,7 @@ interface OcmRaw {
   NumberOfPoints?: number;
   DateLastVerified?: string;
   DateLastStatusUpdate?: string;
+  UsageCost?: string;
 }
 
 export async function fetchStations(
@@ -75,7 +76,7 @@ export async function fetchStations(
     distance: String(distance),
     distanceunit: 'KM',
     maxresults: String(maxResults),
-    verbose: 'false',
+    verbose: 'true',
     key: OCM_KEY,
   });
 
@@ -129,5 +130,6 @@ export async function fetchStations(
     numberOfPoints: p.NumberOfPoints,
     dateLastVerified: p.DateLastVerified,
     dateLastStatusUpdate: p.DateLastStatusUpdate,
+    usageCost: p.UsageCost,
   }));
 }
