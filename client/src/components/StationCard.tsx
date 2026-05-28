@@ -67,6 +67,9 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
           </div>
 
           <p className="text-xs text-gray-500 mt-0.5 truncate">{addressStr}</p>
+          {operator && (
+            <p className="text-xs text-gray-400 mt-0.5 truncate">Operator: {operator.title}</p>
+          )}
 
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             {addr.distance != null && (
