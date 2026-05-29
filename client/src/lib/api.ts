@@ -14,12 +14,20 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   stations: {
-    search: (city: string, distance: number, maxResults: number, operator?: string): Promise<SearchResult> => {
-      const params = new URLSearchParams({
-        city,
-        distance: String(distance),
-        maxResults: String(maxResults),
-      });
+    search: (
+      city?: string,
+      lat?: number,
+      lon?: number,
+      distance: number = 10,
+      maxResults: number = 20,
+      operator?: string
+    ): Promise<SearchResult> => {
+      const params = new URLSearchParams();
+      if (city) params.set('city', city);
+      if (lat !== undefined) params.set('lat', String(lat));
+      if (lon !== undefined) params.set('lon', String(lon));
+      params.set('distance', String(distance));
+      params.set('maxResults', String(maxResults));
       if (operator) params.set('operator', operator);
       return request(`/stations/search?${params.toString()}`);
     },

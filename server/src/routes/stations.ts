@@ -11,11 +11,19 @@ import { geocodeCity, fetchStations } from '../middleware/ocm.js';
 export const stationsRouter: RouterType = Router();
 
 const SearchSchema = z.object({
-  city: z.string().min(1).max(100),
+  city: z.string().min(1).max(100).optional(),
+  lat: z.coerce.number().optional(),
+  lon: z.coerce.number().optional(),
   distance: z.coerce.number().int().min(1).max(100).default(10),
   maxResults: z.coerce.number().int().min(1).max(100).default(20),
   operator: z.string().optional(),
-});
+}).refine(
+  (data) => data.city || (data.lat !== undefined && data.lon !== undefined),
+  {
+    message: "Either city or lat/lon coordinates must be provided",
+    path: ["city"], // or could use ["lat", "lon"] but placing on city for simplicity
+  }
+);
 
 stationsRouter.get('/search', async (req, res) => {
   const parsed = SearchSchema.safeParse(req.query);
@@ -23,27 +31,37 @@ stationsRouter.get('/search', async (req, res) => {
     return res.status(400).json({ message: 'Invalid parameters', code: 'INVALID_PARAMS', details: parsed.error.flatten() });
   }
 
-  const { city, distance, maxResults, operator } = parsed.data;
+  const { city, lat, lon, distance, maxResults, operator } = parsed.data;
 
   try {
-    // 1. Geocode to get location options (always fresh for disambiguation)
-    const geocodeResults = await geocodeCity(city);
-    const primary = geocodeResults[0];
-    
-    // Use first result as default (placeId selection would require passing it from client)
-    const selected = primary;
+    let selected: { lat: number; lon: number; displayName: string };
+    let locationKey: string; // For caching and history
+
+    // Use GPS coordinates if provided, otherwise geocode city
+    if (lat !== undefined && lon !== undefined) {
+      // Use provided coordinates
+      selected = { lat, lon, displayName: `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}` };
+      locationKey = `gps_lat:${lat}_lon:${lon}`; // Key for caching/history
+    } else {
+      // Geocode city to get coordinates (existing behavior)
+      if (!city) throw new Error('City is required when lat/lon not provided');
+      const geocodeResults = await geocodeCity(city);
+      const primary = geocodeResults[0];
+      selected = primary;
+      locationKey = city.toLowerCase(); // Key for caching/history
+    }
 
     // 2. Check station cache with selected coordinates
     let stations: ChargingStation[];
     let cachedAt: string | undefined;
-    const cached = getCachedStations(city, distance, maxResults);
+    const cached = getCachedStations(locationKey, distance, maxResults);
     if (cached) {
       stations = JSON.parse(cached.data);
       cachedAt = cached.cached_at;
     } else {
       stations = await fetchStations(selected.lat, selected.lon, distance, maxResults);
-      setCachedStations(city, selected.lat, selected.lon, distance, maxResults, JSON.stringify(stations));
-      addSearchHistory(city, selected.lat, selected.lon, distance, stations.length);
+      setCachedStations(locationKey, selected.lat, selected.lon, distance, maxResults, JSON.stringify(stations));
+      addSearchHistory(locationKey, selected.lat, selected.lon, distance, stations.length);
     }
 
     // 3. Filter by operator (case-insensitive partial match) if provided

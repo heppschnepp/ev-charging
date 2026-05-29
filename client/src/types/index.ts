@@ -69,7 +69,9 @@ export interface SearchResult {
 }
 
 export interface SearchParams {
-  city: string;
+  city?: string;
+  lat?: number;
+  lon?: number;
   distance: number;
   maxResults: number;
 }

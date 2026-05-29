@@ -8,18 +8,26 @@ import { Sidebar } from '@/components/Sidebar';
 import { useStations } from '@/hooks/useStations';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useHistory } from '@/hooks/useHistory';
+import type { FilterType, SearchHistoryEntry } from '@/types';
 import { filterStations, isFastCharger } from '@/lib/utils';
-import type { FilterType } from '@/types';
 
 export function HomePage() {
   const [searchParams, setSearchParams] = useState<{
-    city: string; distance: number; maxResults: number; operator?: string; enabled: boolean;
+    city?: string;
+    lat?: number;
+    lon?: number;
+    distance: number;
+    maxResults: number;
+    operator?: string;
+    enabled: boolean;
   }>({ city: '', distance: 10, maxResults: 20, enabled: false });
 
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   const { data, isLoading, error } = useStations(
     searchParams.city,
+    searchParams.lat,
+    searchParams.lon,
     searchParams.distance,
     searchParams.maxResults,
     searchParams.operator,
@@ -29,13 +37,21 @@ export function HomePage() {
   const { favorites, isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { data: history = [] } = useHistory();
 
-  const handleSearch = (city: string, distance: number, maxResults: number, operator?: string) => {
+  const handleSearch = (params: { city?: string; lat?: number; lon?: number; distance: number; maxResults: number; operator?: string }) => {
     setActiveFilter('all');
-    setSearchParams({ city, distance, maxResults, operator, enabled: true });
+    setSearchParams({ ...params, enabled: true });
   };
 
-  const handleHistorySelect = (city: string) => {
-    setSearchParams((p) => ({ ...p, city, enabled: true }));
+  const handleHistorySelect = (entry: SearchHistoryEntry) => {
+    setSearchParams({
+      city: entry.city,
+      lat: entry.lat,
+      lon: entry.lon,
+      distance: entry.distance,
+      maxResults: 20, // Reset to default or could use entry.results? But maxResults is about how many to fetch, not results count
+      operator: '',
+      enabled: true,
+    });
   };
 
   const filtered = useMemo(() => {

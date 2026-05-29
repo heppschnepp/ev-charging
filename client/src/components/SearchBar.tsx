@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Sliders, X } from 'lucide-react';
+import { Search, Sliders, X, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onSearch: (city: string, distance: number, maxResults: number, operator?: string) => void;
+  onSearch: (params: { city?: string; lat?: number; lon?: number; distance: number; maxResults: number; operator?: string }) => void;
   isLoading: boolean;
   history?: string[];
 }
@@ -15,7 +15,60 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
   const [operator, setOperator] = useState('');
   const [showOptions, setShowOptions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setLocationError(null);
+    setIsFetchingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        // Call onSearch with lat/lon instead of city
+        onSearch({
+          lat: latitude,
+          lon: longitude,
+          distance,
+          maxResults,
+          operator: operator.trim() || undefined,
+        });
+        setIsFetchingLocation(false);
+        // Clear city input when using GPS
+        setCity('');
+        setShowSuggestions(false);
+        inputRef.current?.blur();
+      },
+      (error) => {
+        let message = 'Unknown error';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = 'Location access denied. Please enable location services.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            message = 'The request to get user location timed out.';
+            break;
+          default:
+            message = `An unknown error occurred: error.code`;
+        }
+        setLocationError(message);
+        setIsFetchingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
 
   const suggestions = history
     .filter((h) => h.toLowerCase().includes(city.toLowerCase()) && h !== city)
@@ -25,13 +78,23 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
     e.preventDefault();
     if (!city.trim()) return;
     setShowSuggestions(false);
-    onSearch(city.trim(), distance, maxResults, operator.trim() || undefined);
+    onSearch({
+      city: city.trim(),
+      distance,
+      maxResults,
+      operator: operator.trim() || undefined,
+    });
   };
 
   const handleSuggestionSelect = (s: string) => {
     setCity(s);
     setShowSuggestions(false);
-    onSearch(s, distance, maxResults, operator.trim() || undefined);
+    onSearch({
+      city: s,
+      distance,
+      maxResults,
+      operator: operator.trim() || undefined,
+    });
   };
 
   useEffect(() => {
@@ -45,6 +108,26 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-visible">
         {/* Main search row */}
         <div className="flex items-center px-4 py-3 gap-2 relative">
+          {/* Location button */}
+          <button
+            type="button"
+            onClick={handleGetLocation}
+            disabled={isFetchingLocation || isLoading}
+            className={cn(
+              'p-2.5 rounded-lg transition-colors shrink-0',
+              isFetchingLocation
+                ? 'bg-ev-100 text-ev-600 animate-pulse'
+                : 'text-gray-400 hover:bg-gray-100',
+            )}
+            title="Use my location"
+            aria-label="Use my location"
+          >
+            {isFetchingLocation ? (
+              <MapPin className="animate-spin" size={20} />
+            ) : (
+              <MapPin size={20} />
+            )}
+          </button>
           <Search className="text-gray-400 shrink-0" size={20} />
           <div className="relative flex-1">
             <input
@@ -110,19 +193,26 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
           </button>
           <button
             type="submit"
-            disabled={isLoading || !city.trim()}
+            disabled={isLoading || (!city.trim() && !isFetchingLocation)}
             className={cn(
               'px-5 py-2.5 rounded-xl font-semibold text-base transition-all shrink-0',
-              isLoading || !city.trim()
+              isLoading || (!city.trim() && !isFetchingLocation)
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 : 'bg-ev-600 text-white hover:bg-ev-700 active:bg-ev-800',
             )}
           >
             {isLoading ? 'Searching…' : 'Search'}
           </button>
-        </div>
+          </div>
 
-        {/* Options panel */}
+          {/* Location error message */}
+          {locationError && (
+            <div className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded-b-md">
+              ⚠️ {locationError}
+            </div>
+          )}
+
+          {/* Options panel */}
         {showOptions && (
           <div className="border-t border-gray-100 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>

@@ -6,7 +6,7 @@ interface Props {
   favorites: FavoriteStation[];
   history: SearchHistoryEntry[];
   onRemoveFavorite: (id: number) => void;
-  onSelectHistory: (city: string) => void;
+  onSelectHistory: (entry: SearchHistoryEntry) => void;
 }
 
 export function Sidebar({ favorites, history, onRemoveFavorite, onSelectHistory }: Props) {
@@ -62,19 +62,19 @@ export function Sidebar({ favorites, history, onRemoveFavorite, onSelectHistory 
           <p className="text-xs text-gray-400 italic px-1">No recent searches.</p>
         ) : (
           <div className="space-y-1.5">
-            {history.slice(0, 8).map((h, i) => (
-              <button
-                key={i}
-                onClick={() => onSelectHistory(h.city)}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 text-left transition-colors group"
-              >
-                <MapPin size={13} className="text-gray-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-700 truncate">{h.city}</p>
-                  <p className="text-xs text-gray-400">{h.results} stations · {h.distance} km</p>
-                </div>
-              </button>
-            ))}
+             {history.slice(0, 8).map((h, i) => (
+               <button
+                 key={i}
+                 onClick={() => onSelectHistory(h)}
+                 className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 text-left transition-colors group"
+               >
+                 <MapPin size={13} className="text-gray-400 shrink-0" />
+                 <div className="flex-1 min-w-0">
+                   <p className="text-xs font-medium text-gray-700 truncate">{h.city}</p>
+                   <p className="text-xs text-gray-400">{h.results} stations · {h.distance} km</p>
+                 </div>
+               </button>
+             ))}
           </div>
         )}
       </div>
