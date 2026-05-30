@@ -6,6 +6,7 @@ import { SummaryBar } from '@/components/SummaryBar';
 import { FilterBar } from '@/components/FilterBar';
 import { Sidebar } from '@/components/Sidebar';
 import { StationMap } from '@/components/StationMap';
+import { StationCardDetails } from '@/components/StationCardDetails';
 import { useStations } from '@/hooks/useStations';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useHistory } from '@/hooks/useHistory';
@@ -25,6 +26,7 @@ export function HomePage() {
 
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [selectedStation, setSelectedStation] = useState<ChargingStation | null>(null);
 
   const { data, isLoading, error } = useStations(
     searchParams.city,
@@ -189,16 +191,33 @@ export function HomePage() {
                 )}
                 
                 {viewMode === 'map' && (
-                  <div className="h-[500px] w-full">
-                    <StationMap
-                      stations={filtered}
-                      onSelectStation={(station) => {
-                        // Optionally switch to list view and scroll to station
-                        // or show a sidebar with details
-                        alert(`Selected: ${station.addressInfo.title}`); // Placeholder
-                      }}
-                    />
-                  </div>
+                  <>
+                    <div className="h-[500px] w-full">
+                      <StationMap
+                        stations={filtered}
+                        onSelectStation={(station) => {
+                          setSelectedStation(station);
+                        }}
+                      />
+                    </div>
+                    
+                    {selectedStation && (
+                      <div className="mt-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <h2 className="text-xl font-bold text-gray-900">
+                            {selectedStation.addressInfo.title}
+                          </h2>
+                          <button
+                            onClick={() => setSelectedStation(null)}
+                            className="text-gray-500 hover:text-gray-600"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <StationCardDetails station={selectedStation} />
+                      </div>
+                    )}
+                  </>
                 )}
                 
                 {viewMode === 'list' && data && !isLoading && (
