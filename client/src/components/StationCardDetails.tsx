@@ -39,7 +39,7 @@ export function StationCardDetails({ station }: StationCardDetailsProps) {
       {/* Connectors */}
       {connections.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Connectors</p>
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Connectors</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {connections.map((c, i) => (
               <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
@@ -48,7 +48,7 @@ export function StationCardDetails({ station }: StationCardDetailsProps) {
                     {c.connectionType?.title ?? 'Unknown'}
                   </span>
                   {c.levelTitle && (
-                    <p className="text-xs text-gray-500 mt-1">{c.levelTitle}</p>
+                    <p className="text-xs text-gray-600 mt-1">{c.levelTitle}</p>
                   )}
                 </div>
                 <div className="text-right shrink-0 ml-2">
@@ -56,7 +56,7 @@ export function StationCardDetails({ station }: StationCardDetailsProps) {
                     <p className="text-sm font-bold text-ev-700">{c.powerKW} kW</p>
                   )}
                   {c.quantity && (
-                    <p className="text-xs text-gray-400">{c.quantity}×</p>
+                    <p className="text-xs text-gray-600">{c.quantity}×</p>
                   )}
                 </div>
               </div>
@@ -69,7 +69,7 @@ export function StationCardDetails({ station }: StationCardDetailsProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
         {operator && (
           <div>
-            <p className="text-xs text-gray-400 mb-1">Operator</p>
+            <p className="text-xs text-gray-600 mb-1">Operator</p>
             <p className="font-medium text-gray-800 text-xs">{operator.title}</p>
             {operator.websiteUrl && (
               <a href={operator.websiteUrl} target="_blank" rel="noreferrer"
@@ -83,7 +83,7 @@ export function StationCardDetails({ station }: StationCardDetailsProps) {
         )}
         {addr.contactTelephone1 && (
           <div>
-            <p className="text-xs text-gray-400 mb-1">Phone</p>
+            <p className="text-xs text-gray-600 mb-1">Phone</p>
             <a href={`tel:${addr.contactTelephone1}`}
               className="inline-flex items-center gap-1 text-xs text-ev-600 hover:underline font-medium"
               onClick={(e) => e.stopPropagation()}
@@ -94,7 +94,7 @@ export function StationCardDetails({ station }: StationCardDetailsProps) {
         )}
         {station.dateLastVerified && (
           <div>
-            <p className="text-xs text-gray-400 mb-1">Last verified</p>
+            <p className="text-xs text-gray-600 mb-1">Last verified</p>
             <p className="inline-flex items-center gap-1 text-xs text-gray-600">
               <Clock size={11} /> {formatDate(station.dateLastVerified)}
             </p>
@@ -102,13 +102,13 @@ export function StationCardDetails({ station }: StationCardDetailsProps) {
         )}
         {station.usageTypeTitle && (
           <div>
-            <p className="text-xs text-gray-400 mb-1">Usage</p>
+            <p className="text-xs text-gray-600 mb-1">Usage</p>
             <p className="text-xs text-gray-700">{station.usageTypeTitle}</p>
           </div>
         )}
         {station.usageCost && (
           <div>
-            <p className="text-xs text-gray-400 mb-1">Cost</p>
+            <p className="text-xs text-gray-600 mb-1">Cost</p>
             <p className="text-xs text-gray-700">{station.usageCost}</p>
           </div>
         )}

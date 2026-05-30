@@ -192,7 +192,7 @@ export function HomePage() {
                 
                 {viewMode === 'map' && (
                   <>
-                    <div className="h-[500px] w-full">
+                    <div className="min-h-[300px] h-[60vh] w-full">
                       <StationMap
                         stations={filtered}
                         onSelectStation={(station) => {

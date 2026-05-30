@@ -73,19 +73,19 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 mt-0.5 truncate">{addressStr}</p>
+          <p className="text-xs text-gray-600 mt-0.5 truncate">{addressStr}</p>
           {operator && (
-            <p className="text-xs text-gray-400 mt-0.5 truncate">Operator: {operator.title}</p>
+            <p className="text-xs text-gray-600 mt-0.5 truncate">Operator: {operator.title}</p>
           )}
 
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             {addr.distance != null && (
-              <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+              <span className="inline-flex items-center gap-1 text-xs text-gray-600">
                 <MapPin size={12} /> {formatDistance(addr.distance)}
               </span>
             )}
             {connections.length > 0 && totalConnectors > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+              <span className="inline-flex items-center gap-1 text-xs text-gray-600">
                 <Plug size={12} /> {totalConnectors} connector{totalConnectors !== 1 ? 's' : ''}
               </span>
             )}
@@ -106,7 +106,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
             }}
             className={cn(
               'p-1.5 rounded-lg transition-colors',
-              isFavorite ? 'text-red-500 bg-red-50' : 'text-gray-300 hover:text-red-400 hover:bg-red-50',
+              isFavorite ? 'text-red-500 bg-red-50' : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100',
             )}
             title={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
           >
@@ -114,7 +114,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
           </button>
           <ChevronDown
             size={16}
-            className={cn('text-gray-400 transition-transform', expanded && 'rotate-180')}
+            className={cn('text-gray-500 transition-transform', expanded && 'rotate-180')}
           />
         </div>
       </div>

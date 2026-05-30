@@ -63,11 +63,17 @@ export function StationMap({ stations, onSelectStation }: Props) {
           shadowSize: [41, 41]
         });
 
+        // Create aria-label for accessibility
+        const statusText = status === 'operational' ? 'Operational' : status === 'planned' ? 'Not Operational' : 'Unknown';
+        const distanceText = addr.distance != null ? `${formatDistance(addr.distance)} away` : '';
+        const ariaLabel = `${addr.title}, ${statusText}, ${fast ? 'Fast charging, ' : ''}${distanceText}, ${station.connections.reduce((sum, c) => sum + (c.quantity ?? 1), 0)} connectors`;
+
         return (
           <Marker
             key={station.id}
             position={[addr.lat, addr.lon]}
-            icon={icon}>
+            icon={icon}
+            aria-label={ariaLabel}>
             <Tooltip 
               direction="top"
               offset={[0, -10]}

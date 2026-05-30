@@ -13,10 +13,10 @@ export function StationCardSummary({ station }: StationCardSummaryProps) {
   const fast = isFastCharger(station);
   const { addressInfo: addr } = station;
   
-  // Determine status color
-  let statusColor = 'text-green-600';
-  if (status === 'planned') statusColor = 'text-red-600';
-  else if (status === 'unknown') statusColor = 'text-gray-600';
+  // Determine status color with improved contrast
+  let statusColor = 'text-green-700';
+  if (status === 'planned') statusColor = 'text-red-700';
+  else if (status === 'unknown') statusColor = 'text-gray-700';
   
   const totalConnectors = station.connections.reduce((sum, c) => sum + (c.quantity ?? 1), 0);
 
@@ -35,12 +35,12 @@ export function StationCardSummary({ station }: StationCardSummaryProps) {
           </span>
         </div>
         {addr.distance != null && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-600">
             <MapPin size={12} /> {formatDistance(addr.distance)} away
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2 text-xs text-gray-500">
+      <div className="flex items-center gap-2 text-xs text-gray-600">
         <MapPin size={12} /> {totalConnectors} connector{totalConnectors !== 1 ? 's' : ''}
       </div>
     </div>
