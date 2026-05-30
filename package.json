@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "description": "EV Charging Station Finder",
-  "packageManager": "pnpm@11.4.0",
+  "packageManager": "pnpm@11.5.0",
   "scripts": {
     "dev": "concurrently \"pnpm --filter ev-server dev\" \"pnpm --filter ev-client dev\"",
     "build": "pnpm --parallel --filter \"*\" build",

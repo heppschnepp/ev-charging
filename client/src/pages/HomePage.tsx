@@ -1,15 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, MapPin } from 'lucide-react';
 import { SearchBar } from '@/components/SearchBar';
 import { StationCard } from '@/components/StationCard';
 import { SummaryBar } from '@/components/SummaryBar';
 import { FilterBar } from '@/components/FilterBar';
 import { Sidebar } from '@/components/Sidebar';
+import { StationMap } from '@/components/StationMap';
 import { useStations } from '@/hooks/useStations';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useHistory } from '@/hooks/useHistory';
-import type { FilterType, SearchHistoryEntry } from '@/types';
-import { filterStations, isFastCharger } from '@/lib/utils';
+import type { FilterType, SearchHistoryEntry, ChargingStation } from '@/types';
+import { filterStations, isFastCharger, cn } from '@/lib/utils';
 
 export function HomePage() {
   const [searchParams, setSearchParams] = useState<{
@@ -23,6 +24,7 @@ export function HomePage() {
   }>({ city: '', distance: 10, maxResults: 20, enabled: false });
 
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   const { data, isLoading, error } = useStations(
     searchParams.city,
@@ -48,7 +50,7 @@ export function HomePage() {
       lat: entry.lat,
       lon: entry.lon,
       distance: entry.distance,
-      maxResults: 20, // Reset to default or could use entry.results? But maxResults is about how many to fetch, not results count
+      maxResults: 20,
       operator: '',
       enabled: true,
     });
@@ -77,15 +79,44 @@ export function HomePage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-ev-600 flex items-center justify-center">
-              <Zap size={20} className="text-white" />
+          <div className="flex items-center justify-between gap-2.5 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-ev-600 flex items-center justify-center">
+                <Zap size={20} className="text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-gray-900 leading-none text-lg">EV Charging Finder</h1>
+                <p className="text-xs text-gray-400 leading-none mt-0.5">Powered by Open Charge Map</p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-gray-900 leading-none text-lg">EV Charging Finder</h1>
-              <p className="text-xs text-gray-400 leading-none mt-0.5">Powered by Open Charge Map</p>
+            
+            {/* View toggle */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-sm font-medium',
+                  viewMode === 'list'
+                    ? 'bg-ev-600 text-white'
+                    : 'text-gray-500 hover:bg-gray-100'
+                )}
+              >
+                List
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-sm font-medium',
+                  viewMode === 'map'
+                    ? 'bg-ev-600 text-white'
+                    : 'text-gray-500 hover:bg-gray-100'
+                )}
+              >
+                Map
+              </button>
             </div>
           </div>
+          
           <SearchBar
             onSearch={handleSearch}
             isLoading={isLoading}
@@ -126,42 +157,62 @@ export function HomePage() {
 
             {/* Results */}
             {data && !isLoading && (
-<>
-                 <SummaryBar
-                   stations={data.stations}
-                   location={data.location}
-                 />
-                <FilterBar active={activeFilter} onChange={setActiveFilter} counts={counts} />
+              <>
+                {viewMode === 'list' && (
+                  <>
+                    <SummaryBar
+                      stations={data.stations}
+                      location={data.location}
+                    />
+                    <FilterBar active={activeFilter} onChange={setActiveFilter} counts={counts} />
 
-                {filtered.length === 0 ? (
-                  <div className="text-center py-16 text-gray-400">
-                    <Zap size={32} className="mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">No stations match this filter.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {filtered.map((station) => (
-                      <StationCard
-                        key={station.id}
-                        station={station}
-                        isFavorite={isFavorite(station.id)}
-                        onToggleFavorite={(s) =>
-                          isFavorite(s.id) ? removeFavorite(s.id) : addFavorite(s)
-                        }
-                      />
-                    ))}
+                    {filtered.length === 0 ? (
+                      <div className="text-center py-16 text-gray-400">
+                        <Zap size={32} className="mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">No stations match this filter.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {filtered.map((station) => (
+                          <StationCard
+                            key={station.id}
+                            station={station}
+                            isFavorite={isFavorite(station.id)}
+                            onToggleFavorite={(s) =>
+                              isFavorite(s.id) ? removeFavorite(s.id) : addFavorite(s)
+                            }
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                {viewMode === 'map' && (
+                  <div className="h-[500px] w-full">
+                    <StationMap
+                      stations={filtered}
+                      onSelectStation={(station) => {
+                        // Optionally switch to list view and scroll to station
+                        // or show a sidebar with details
+                        alert(`Selected: ${station.addressInfo.title}`); // Placeholder
+                      }}
+                    />
                   </div>
                 )}
+                
+                {viewMode === 'list' && data && !isLoading && (
+                  <>
+                    {!data && !isLoading && !error && (
+                      <div className="text-center py-24 text-gray-300">
+                        <Zap size={48} className="mx-auto mb-4 opacity-20" />
+                        <p className="text-gray-400 text-base font-medium">Find EV charging stations near you</p>
+                        <p className="text-gray-300 text-sm mt-1">Enter a city name to get started</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </>
-            )}
-
-            {/* Empty state */}
-            {!data && !isLoading && !error && (
-              <div className="text-center py-24 text-gray-300">
-                <Zap size={48} className="mx-auto mb-4 opacity-20" />
-                <p className="text-gray-400 text-base font-medium">Find EV charging stations near you</p>
-                <p className="text-gray-300 text-sm mt-1">Enter a city name to get started</p>
-              </div>
             )}
           </div>
 
