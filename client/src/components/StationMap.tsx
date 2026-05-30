@@ -87,7 +87,7 @@ export function StationMap({ stations, onSelectStation }: Props) {
               className="station-popup"
               autoPan={false}
             >
-              <StationCardDetails station={station} />
+              <StationCardSummary station={station} />
               {onSelectStation && (
                 <div className="pt-3 border-t border-gray-200">
                   <button
