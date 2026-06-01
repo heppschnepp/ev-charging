@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import * as L from 'leaflet';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import type { ChargingStation } from '@/types';
 import { getStationStatus, isFastCharger, getMaxPower, formatDistance } from '@/lib/utils';
 import { StationCardSummary } from '@/components/StationCardSummary';
@@ -54,14 +55,14 @@ export function StationMap({ stations, onSelectStation }: Props) {
         else if (fast) iconColor = 'orange';
         
         const icon = new L.Icon({
-          iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          tooltipAnchor: [16, -28],
-          shadowSize: [41, 41]
-        });
+           iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
+           shadowUrl: markerShadow,
+           iconSize: [25, 41],
+           iconAnchor: [12, 41],
+           popupAnchor: [1, -34],
+           tooltipAnchor: [16, -28],
+           shadowSize: [41, 41]
+         });
 
         // Create aria-label for accessibility
         const statusText = status === 'operational' ? 'Operational' : status === 'planned' ? 'Not Operational' : 'Unknown';

@@ -7,3 +7,8 @@ declare module "virtual:pwa-register" {
     onOfflineReady?: () => void;
   }): () => void;
 }
+
+declare module "leaflet/dist/images/*.png" {
+  const value: string;
+  export default value;
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
-import L from 'leaflet';
+import * as L from 'leaflet';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 // Fits the map view to the route bounds whenever routeCoords changes
 function FitBounds({ coords }: { coords: [number, number][] | null }) {
@@ -24,7 +25,7 @@ const getStationIcon = (status: string, fast: boolean) => {
 
   return new L.Icon({
     iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    shadowUrl: markerShadow,
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
@@ -46,6 +47,7 @@ interface RoutingViewProps {
   setRouteCoords: (coords: [number, number][] | null) => void;
   routeStations: ChargingStation[];
   setRouteStations: (stations: ChargingStation[]) => void;
+  onSelectStation?: (station: ChargingStation) => void;
 }
 
 export function RoutingView({
@@ -61,6 +63,7 @@ export function RoutingView({
   setRouteCoords,
   routeStations,
   setRouteStations,
+  onSelectStation,
 }: RoutingViewProps) {
   // Haversine distance in meters
   function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -321,7 +324,7 @@ export function RoutingView({
                     <StationCardSummary station={station} />
                     <div className="pt-3 border-t border-gray-200">
                       <button
-                        onClick={() => console.log('Station clicked:', station)}
+                        onClick={() => onSelectStation?.(station)}
                         className="w-full text-left text-ev-600 hover:text-ev-700 underline"
                       >
                         View Details
