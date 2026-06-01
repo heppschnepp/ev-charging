@@ -1,6 +1,17 @@
-import { useCallback } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip } from 'react-leaflet';
+import { useCallback, useEffect } from 'react';
+import { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
+
+// Fits the map view to the route bounds whenever routeCoords changes
+function FitBounds({ coords }: { coords: [number, number][] | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (coords && coords.length > 0) {
+      map.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
+    }
+  }, [coords, map]);
+  return null;
+}
 import { ChargingStation } from '@/types';
 import { getStationStatus, isFastCharger, formatDistance } from '@/lib/utils';
 import { StationCardSummary } from '@/components/StationCardSummary';
@@ -257,11 +268,12 @@ export function RoutingView({
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Route Map</h2>
           <MapContainer
-            center={routeCoords && routeCoords.length > 0 ? routeCoords[0] : [20, 0]}
-            zoom={routeCoords && routeCoords.length > 0 ? 6 : 2}
+            center={[20, 0]}
+            zoom={2}
             style={{ height: '400px', width: '100%' }}
             scrollWheelZoom={true}
           >
+            <FitBounds coords={routeCoords} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
