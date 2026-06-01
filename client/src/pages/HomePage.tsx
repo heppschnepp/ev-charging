@@ -212,55 +212,54 @@ export function HomePage() {
                    </>
                  )}
                  
-                 {viewMode === 'map' && (
-                   <>
-                     <div className="min-h-[300px] h-[60vh] w-full">
-                       <StationMap
-                         stations={filtered}
-                         onSelectStation={(station) => {
-                           setSelectedStation(station);
-                         }}
-                       />
-                     </div>
-                     
-                     {selectedStation && (
-                       <div className="mt-6">
-                         <div className="flex justify-between items-start mb-4">
-                           <h2 className="text-xl font-bold text-gray-900">
-                             {selectedStation.addressInfo.title}
-                           </h2>
-                           <button
-                             onClick={() => setSelectedStation(null)}
-                             className="text-gray-500 hover:text-gray-600"
-                           >
-                             ✕
-                           </button>
-                         </div>
-                         <StationCardDetails station={selectedStation} />
-                       </div>
-                     )}
-                   </>
-                 )}
+                  {viewMode === 'map' && (
+                    <div className="min-h-[300px] h-[60vh] w-full">
+                      <StationMap
+                        stations={filtered}
+                        onSelectStation={(station) => {
+                          setSelectedStation(station);
+                        }}
+                      />
+                    </div>
+                  )}
                </>
              )}
              
-             {viewMode === 'routing' && (
-               <RoutingView
-                 sourceCity={sourceCity}
-                 setSourceCity={setSourceCity}
-                 destinationCity={destinationCity}
-                 setDestinationCity={setDestinationCity}
-                 isCalculating={isCalculating}
-                 setIsCalculating={setIsCalculating}
-                 routeError={routeError}
-                 setRouteError={setRouteError}
-                 routeCoords={routeCoords}
-                 setRouteCoords={setRouteCoords}
-                 routeStations={routeStations}
-                 setRouteStations={setRouteStations}
-               />
-             )}
-           </div>
+              {viewMode === 'routing' && (
+                <RoutingView
+                  sourceCity={sourceCity}
+                  setSourceCity={setSourceCity}
+                  destinationCity={destinationCity}
+                  setDestinationCity={setDestinationCity}
+                  isCalculating={isCalculating}
+                  setIsCalculating={setIsCalculating}
+                  routeError={routeError}
+                  setRouteError={setRouteError}
+                  routeCoords={routeCoords}
+                  setRouteCoords={setRouteCoords}
+                  routeStations={routeStations}
+                  setRouteStations={setRouteStations}
+                   onSelectStation={setSelectedStation}
+                  />
+                )}
+               {/* Selected station details - show when a station is selected */}
+              {selectedStation && (
+                <div className="mt-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {selectedStation.addressInfo.title}
+                    </h2>
+                    <button
+                      onClick={() => setSelectedStation(null)}
+                      className="text-gray-500 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <StationCardDetails station={selectedStation} />
+                </div>
+              )}
+            </div>
 
            {/* Sidebar */}
            <aside className="w-72 shrink-0 hidden lg:block">
