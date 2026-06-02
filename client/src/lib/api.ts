@@ -12,26 +12,28 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export const api = {
-  stations: {
-    search: (
-      city?: string,
-      lat?: number,
-      lon?: number,
-      distance: number = 10,
-      maxResults: number = 20,
-      operator?: string
-    ): Promise<SearchResult> => {
-      const params = new URLSearchParams();
-      if (city) params.set('city', city);
-      if (lat !== undefined) params.set('lat', String(lat));
-      if (lon !== undefined) params.set('lon', String(lon));
-      params.set('distance', String(distance));
-      params.set('maxResults', String(maxResults));
-      if (operator) params.set('operator', operator);
-      return request(`/stations/search?${params.toString()}`);
-    },
-  },
+   export const api = {
+     stations: {
+       search: (
+         city?: string,
+         lat?: number,
+         lon?: number,
+         distance: number = 10,
+         maxResults: number = 20,
+         operator?: string,
+         power?: number
+       ): Promise<SearchResult> => {
+         const params = new URLSearchParams();
+         if (city) params.set('city', city);
+         if (lat !== undefined) params.set('lat', String(lat));
+         if (lon !== undefined) params.set('lon', String(lon));
+         params.set('distance', String(distance));
+         params.set('maxResults', String(maxResults));
+         if (operator) params.set('operator', operator);
+         if (power !== undefined) params.set('power', String(power));
+         return request(`/stations/search?${params.toString()}`);
+       },
+     },
 
   favorites: {
     list: (): Promise<FavoriteStation[]> => request('/favorites'),

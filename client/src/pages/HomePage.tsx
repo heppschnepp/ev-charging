@@ -22,6 +22,7 @@ export function HomePage() {
     distance: number;
     maxResults: number;
     operator?: string;
+    power?: number;
     enabled: boolean;
   }>({ city: '', distance: 10, maxResults: 20, enabled: false });
 
@@ -37,35 +38,37 @@ export function HomePage() {
    const [routeCoords, setRouteCoords] = useState<[number, number][] | null>(null);
    const [routeStations, setRouteStations] = useState<ChargingStation[]>([]);
 
-   const { data, isLoading, error } = useStations(
-     searchParams.city,
-     searchParams.lat,
-     searchParams.lon,
-     searchParams.distance,
-     searchParams.maxResults,
-     searchParams.operator,
-     searchParams.enabled
-   );
+    const { data, isLoading, error } = useStations(
+      searchParams.city,
+      searchParams.lat,
+      searchParams.lon,
+      searchParams.distance,
+      searchParams.maxResults,
+      searchParams.operator,
+      searchParams.power,
+      searchParams.enabled
+    );
 
    const { favorites, isFavorite, addFavorite, removeFavorite } = useFavorites();
    const { data: history = [] } = useHistory();
 
-  const handleSearch = (params: { city?: string; lat?: number; lon?: number; distance: number; maxResults: number; operator?: string }) => {
-    setActiveFilter('all');
-    setSearchParams({ ...params, enabled: true });
-  };
+   const handleSearch = (params: { city?: string; lat?: number; lon?: number; distance: number; maxResults: number; operator?: string; power?: number }) => {
+     setActiveFilter('all');
+     setSearchParams({ ...params, enabled: true });
+   };
 
-  const handleHistorySelect = (entry: SearchHistoryEntry) => {
-    setSearchParams({
-      city: entry.city,
-      lat: entry.lat,
-      lon: entry.lon,
-      distance: entry.distance,
-      maxResults: 20,
-      operator: '',
-      enabled: true,
-    });
-  };
+   const handleHistorySelect = (entry: SearchHistoryEntry) => {
+     setSearchParams({
+       city: entry.city,
+       lat: entry.lat,
+       lon: entry.lon,
+       distance: entry.distance,
+       maxResults: 20,
+       operator: '',
+       power: undefined,
+       enabled: true,
+     });
+   };
 
   const filtered = useMemo(() => {
     if (!data) return [];

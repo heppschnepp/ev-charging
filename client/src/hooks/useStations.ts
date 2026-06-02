@@ -8,11 +8,12 @@ export function useStations(
   distance: number = 10,
   maxResults: number = 20,
   operator?: string,
+  power?: number,
   enabled: boolean = true
 ) {
   return useQuery({
-    queryKey: ['stations', city, lat, lon, distance, maxResults, operator],
-    queryFn: () => api.stations.search(city, lat, lon, distance, maxResults, operator),
+    queryKey: ['stations', city, lat, lon, distance, maxResults, operator, power],
+    queryFn: () => api.stations.search(city, lat, lon, distance, maxResults, operator, power),
     enabled: enabled && ((city && city.trim().length > 0) || (lat !== undefined && lon !== undefined)),
     staleTime: 1000 * 60 * 10, // 10 minutes
     retry: 1,

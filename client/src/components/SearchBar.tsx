@@ -3,7 +3,15 @@ import { Search, Sliders, X, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onSearch: (params: { city?: string; lat?: number; lon?: number; distance: number; maxResults: number; operator?: string }) => void;
+  onSearch: (params: {
+    city?: string;
+    lat?: number;
+    lon?: number;
+    distance: number;
+    maxResults: number;
+    operator?: string;
+    power?: number;
+  }) => void;
   isLoading: boolean;
   history?: string[];
 }
@@ -13,6 +21,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
   const [distance, setDistance] = useState(10);
   const [maxResults, setMaxResults] = useState(20);
   const [operator, setOperator] = useState('');
+  const [power, setPower] = useState(0);
   const [showOptions, setShowOptions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -37,6 +46,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
           distance,
           maxResults,
           operator: operator.trim() || undefined,
+          power: power || undefined,
         });
         setIsFetchingLocation(false);
         // Clear city input when using GPS
@@ -66,7 +76,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 0,
-      }
+      },
     );
   };
 
@@ -83,6 +93,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
       distance,
       maxResults,
       operator: operator.trim() || undefined,
+      power: power || undefined,
     });
   };
 
@@ -94,6 +105,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
       distance,
       maxResults,
       operator: operator.trim() || undefined,
+      power: power || undefined,
     });
   };
 
@@ -203,16 +215,16 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
           >
             {isLoading ? 'Searching…' : 'Search'}
           </button>
+        </div>
+
+        {/* Location error message */}
+        {locationError && (
+          <div className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded-b-md">
+            ⚠️ {locationError}
           </div>
+        )}
 
-          {/* Location error message */}
-          {locationError && (
-            <div className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded-b-md">
-              ⚠️ {locationError}
-            </div>
-          )}
-
-          {/* Options panel */}
+        {/* Options panel */}
         {showOptions && (
           <div className="border-t border-gray-100 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
@@ -229,7 +241,26 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                 className="w-full accent-ev-600 h-5"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>1 km</span><span>100 km</span>
+                <span>1 km</span>
+                <span>100 km</span>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500 block mb-2">
+                Min Power (KW): <span className="text-gray-900 font-semibold">{power}</span>
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={1000}
+                step={1}
+                value={power}
+                onChange={(e) => setPower(Number(e.target.value))}
+                className="w-full accent-ev-600 h-5"
+              />
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>0 KW</span>
+                <span>1000 KW</span>
               </div>
             </div>
             <div>
@@ -246,7 +277,8 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                 className="w-full accent-ev-600 h-5"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>5</span><span>100</span>
+                <span>5</span>
+                <span>100</span>
               </div>
             </div>
             <div className="md:col-span-2">
