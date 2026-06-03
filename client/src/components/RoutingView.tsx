@@ -1,30 +1,39 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
 import * as L from 'leaflet';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { ChargingStation } from '@/types';
+import { getStationStatus, isFastCharger, formatDistance } from '@/lib/utils';
+import { StationCardSummary } from '@/components/StationCardSummary';
+import {
+  geocodeCity,
+  fetchRoute,
+  fetchStationsAlongRoute,
+  sampleRoutePoints,
+  formatRouteDuration,
+  formatRouteDistance,
+  type RouteSummary,
+} from '@/utils/routingUtils';
 
-// Fits the map view to the route bounds whenever routeCoords changes
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
 function FitBounds({ coords }: { coords: [number, number][] | null }) {
   const map = useMap();
   useEffect(() => {
-    if (coords && coords.length > 0) {
+    if (coords?.length) {
       map.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
     }
   }, [coords, map]);
   return null;
 }
-import { ChargingStation } from '@/types';
-import { getStationStatus, isFastCharger, formatDistance } from '@/lib/utils';
-import { StationCardSummary } from '@/components/StationCardSummary';
 
-// Custom icon for stations
 const getStationIcon = (status: string, fast: boolean) => {
-  let iconColor = 'green';
-  if (!status || status !== 'operational') iconColor = 'red';
-  else if (fast) iconColor = 'orange';
+  let color = 'green';
+  if (!status || status !== 'operational') color = 'red';
+  else if (fast) color = 'orange';
 
   return new L.Icon({
-    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
+    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
     shadowUrl: markerShadow,
     iconSize: [25, 41],
     iconAnchor: [12, 41],
@@ -34,21 +43,77 @@ const getStationIcon = (status: string, fast: boolean) => {
   });
 };
 
+// ─── Route Summary Banner ─────────────────────────────────────────────────────
+
+function RouteSummaryBanner({
+  summary,
+  stationCount,
+}: {
+  summary: RouteSummary;
+  stationCount: number;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-4 px-4 py-3 bg-ev-50 border border-ev-200 rounded-lg text-sm">
+      <div className="flex items-center gap-1.5 text-ev-700 font-medium">
+        <svg
+          className="w-4 h-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M3 12h18M3 12l4-4m-4 4 4 4" />
+        </svg>
+        {formatRouteDistance(summary.distanceMeters)}
+      </div>
+      <div className="flex items-center gap-1.5 text-ev-700 font-medium">
+        <svg
+          className="w-4 h-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" />
+        </svg>
+        {formatRouteDuration(summary.durationSeconds)}
+      </div>
+      <div className="flex items-center gap-1.5 text-green-700 font-medium">
+        <svg
+          className="w-4 h-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+        </svg>
+        {stationCount} charging station{stationCount !== 1 ? 's' : ''} along route
+      </div>
+    </div>
+  );
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
 interface RoutingViewProps {
   sourceCity: string;
   setSourceCity: (city: string) => void;
   destinationCity: string;
   setDestinationCity: (city: string) => void;
   isCalculating: boolean;
-  setIsCalculating: (calculating: boolean) => void;
+  setIsCalculating: (v: boolean) => void;
   routeError: string | null;
-  setRouteError: (error: string | null) => void;
+  setRouteError: (v: string | null) => void;
   routeCoords: [number, number][] | null;
-  setRouteCoords: (coords: [number, number][] | null) => void;
+  setRouteCoords: (v: [number, number][] | null) => void;
   routeStations: ChargingStation[];
-  setRouteStations: (stations: ChargingStation[]) => void;
+  setRouteStations: (v: ChargingStation[]) => void;
   onSelectStation?: (station: ChargingStation) => void;
 }
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export function RoutingView({
   sourceCity,
@@ -65,154 +130,59 @@ export function RoutingView({
   setRouteStations,
   onSelectStation,
 }: RoutingViewProps) {
-  // Haversine distance in meters
-  function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371000;
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const [routeSummary, setRouteSummary] = useState<RouteSummary | null>(null);
 
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
+  // AbortController ref — cancelled whenever a new calculation starts or the
+  // component unmounts, preventing stale async updates from landing.
+  const abortRef = useRef<AbortController | null>(null);
 
-  // Helper function to sample points along a route at a given interval (in km)
-  function sampleRoutePoints(points: [number, number][], intervalKm: number): [number, number][] {
-    if (points.length < 2) return points;
-
-    const sampled: [number, number][] = [points[0]];
-    let accumulatedDistance = 0;
-    const targetDistance = intervalKm * 1000;
-
-    for (let i = 1; i < points.length; i++) {
-      const [lat1, lon1] = points[i - 1];
-      const [lat2, lon2] = points[i];
-      const segmentDistance = haversineDistance(lat1, lon1, lat2, lon2);
-      accumulatedDistance += segmentDistance;
-
-      while (accumulatedDistance >= targetDistance && sampled.length < points.length) {
-        const overshoot = accumulatedDistance - targetDistance;
-        const direction = segmentDistance > 0 ? (segmentDistance - overshoot) / segmentDistance : 0;
-        const interpolatedLat = lat1 + (lat2 - lat1) * direction;
-        const interpolatedLon = lon1 + (lon2 - lon1) * direction;
-        sampled.push([interpolatedLat, interpolatedLon]);
-        accumulatedDistance = overshoot;
-      }
-    }
-
-    if (
-      sampled[sampled.length - 1][0] !== points[points.length - 1][0] ||
-      sampled[sampled.length - 1][1] !== points[points.length - 1][1]
-    ) {
-      sampled.push(points[points.length - 1]);
-    }
-
-    return sampled;
-  }
-
-  // Helper function to geocode a city using Nominatim
-  async function geocodeCity(city: string): Promise<{ lat: number; lon: number } | null> {
-    if (!city.trim()) return null;
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
-        { headers: { 'User-Agent': 'ev-charging-finder/1.0' } },
-      );
-      if (!response.ok) return null;
-      const data = await response.json();
-      if (!data || data.length === 0) return null;
-      const [result] = data;
-      return { lat: parseFloat(result.lat), lon: parseFloat(result.lon) };
-    } catch {
-      return null;
-    }
-  }
-
-  // Helper function to fetch stations from our backend
-  async function fetchStations(
-    lat: number,
-    lon: number,
-    distance: number,
-    maxResults: number,
-  ): Promise<ChargingStation[]> {
-    try {
-      const response = await fetch(
-        `/api/stations/search?lat=${lat}&lon=${lon}&distance=${distance}&maxResults=${maxResults}`,
-      );
-      if (!response.ok) throw new Error('Failed to fetch stations');
-      const data = await response.json();
-      return data.stations || [];
-    } catch {
-      return [];
-    }
-  }
+  useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
 
   const calculateRoute = useCallback(async () => {
+    // Cancel any in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const { signal } = controller;
+
     setIsCalculating(true);
     setRouteError(null);
     setRouteCoords(null);
     setRouteStations([]);
+    setRouteSummary(null);
 
     try {
-      // 1. Geocode source and destination
+      // 1. Geocode both cities in parallel
       const [sourceLoc, destLoc] = await Promise.all([
-        geocodeCity(sourceCity),
-        geocodeCity(destinationCity),
+        geocodeCity(sourceCity, signal),
+        geocodeCity(destinationCity, signal),
       ]);
 
-      if (!sourceLoc || !destLoc) {
-        throw new Error('Could not geocode one or both locations');
-      }
+      if (!sourceLoc) throw new Error(`Could not find "${sourceCity}". Try a more specific name.`);
+      if (!destLoc)
+        throw new Error(`Could not find "${destinationCity}". Try a more specific name.`);
 
-      const { lat: startLat, lon: startLon } = sourceLoc;
-      const { lat: endLat, lon: endLon } = destLoc;
+      // 2. Fetch route (proxied in production, direct OSRM in dev)
+      const { coords, summary } = await fetchRoute(sourceLoc, destLoc, signal);
+      setRouteCoords(coords);
+      setRouteSummary(summary);
 
-      // 2. Get route from OSRM
-      const routeResponse = await fetch(
-        `http://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson`,
-      );
-      if (!routeResponse.ok) throw new Error('Failed to calculate route');
-
-      const routeData = await routeResponse.json();
-      if (!routeData.routes || routeData.routes.length === 0) {
-        throw new Error('No route found');
-      }
-
-      const route = routeData.routes[0];
-      const coordinates = route.geometry.coordinates as number[][];
-      const latLngs = coordinates.map((coord) => [coord[1], coord[0]]) as [number, number][];
-
-      setRouteCoords(latLngs);
-
-      // 3. Sample points along the route every 10km
-      const samplePoints = sampleRoutePoints(latLngs, 10);
-
-      // 4. Fetch stations for each sample point
-      const allStations: ChargingStation[] = [];
-      const seenIds = new Set<number>();
-
-      for (const point of samplePoints) {
-        const [lat, lon] = point;
-        const stations = await fetchStations(lat, lon, 10, 20);
-        for (const station of stations) {
-          if (!seenIds.has(station.id)) {
-            seenIds.add(station.id);
-            allStations.push(station);
-          }
-        }
-      }
-
-      setRouteStations(allStations);
+      // 3. Sample every 10 km then fetch ALL points in parallel
+      const samplePoints = sampleRoutePoints(coords, 10);
+      const stations = await fetchStationsAlongRoute(samplePoints, 10, 20, signal);
+      setRouteStations(stations);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
+      if ((err as Error).name === 'AbortError') return; // superseded request — ignore silently
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred.';
       setRouteError(message);
       console.error('Routing error:', err);
     } finally {
-      setIsCalculating(false);
+      // Only clear loading state if this controller is still the current one
+      if (abortRef.current === controller) {
+        setIsCalculating(false);
+      }
     }
   }, [
     sourceCity,
@@ -223,8 +193,17 @@ export function RoutingView({
     setRouteStations,
   ]);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && sourceCity && destinationCity && !isCalculating) {
+      calculateRoute();
+    }
+  };
+
+  const hasResults = routeCoords || routeStations.length > 0;
+
   return (
     <div className="space-y-6">
+      {/* ── Input Panel ── */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">EV Route Planner</h2>
         <div className="space-y-4">
@@ -234,6 +213,7 @@ export function RoutingView({
               type="text"
               value={sourceCity}
               onChange={(e) => setSourceCity(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Enter source city"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-ev-600 focus:border-transparent"
               disabled={isCalculating}
@@ -245,6 +225,7 @@ export function RoutingView({
               type="text"
               value={destinationCity}
               onChange={(e) => setDestinationCity(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Enter destination city"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-ev-600 focus:border-transparent"
               disabled={isCalculating}
@@ -259,6 +240,7 @@ export function RoutingView({
           >
             {isCalculating ? 'Calculating...' : 'Calculate Route'}
           </button>
+
           {routeError && (
             <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
               ⚠️ {routeError}
@@ -267,14 +249,20 @@ export function RoutingView({
         </div>
       </div>
 
-      {(routeCoords || routeStations.length > 0) && (
+      {/* ── Route Summary ── */}
+      {routeSummary && (
+        <RouteSummaryBanner summary={routeSummary} stationCount={routeStations.length} />
+      )}
+
+      {/* ── Map ── */}
+      {hasResults && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Route Map</h2>
           <MapContainer
             center={[20, 0]}
             zoom={2}
             style={{ height: '400px', width: '100%' }}
-            scrollWheelZoom={true}
+            scrollWheelZoom
           >
             <FitBounds coords={routeCoords} />
             <TileLayer
@@ -283,19 +271,15 @@ export function RoutingView({
             />
             {routeCoords && (
               <Polyline positions={routeCoords} color="blue" weight={5} opacity={0.7}>
-                <Popup>
-                  <span>EV Route</span>
-                </Popup>
+                <Popup>EV Route</Popup>
               </Polyline>
             )}
             {routeStations.map((station) => {
               const status = getStationStatus(station);
-              const isOperational = status === 'operational';
               const fast = isFastCharger(station);
               const { addressInfo: addr } = station;
-
               const icon = getStationIcon(status, fast);
-
+              const isOperational = status === 'operational';
               const statusText = isOperational
                 ? 'Operational'
                 : status === 'planned'
@@ -303,21 +287,16 @@ export function RoutingView({
                   : 'Unknown';
               const distanceText =
                 addr.distance != null ? `${formatDistance(addr.distance)} away` : '';
-              const ariaLabel = `${addr.title}, ${statusText}, ${fast ? 'Fast charging, ' : ''}${distanceText}, ${station.connections.reduce((sum, c) => sum + (c.quantity ?? 1), 0)} connectors`;
+              const connectors = station.connections.reduce((sum, c) => sum + (c.quantity ?? 1), 0);
 
               return (
                 <Marker
                   key={station.id}
                   position={[addr.lat, addr.lon]}
                   icon={icon}
-                  aria-label={ariaLabel}
+                  aria-label={`${addr.title}, ${statusText}, ${fast ? 'Fast charging, ' : ''}${distanceText}, ${connectors} connectors`}
                 >
-                  <Tooltip
-                    direction="top"
-                    offset={[0, -10]}
-                    sticky={true}
-                    className="station-tooltip"
-                  >
+                  <Tooltip direction="top" offset={[0, -10]} sticky className="station-tooltip">
                     <StationCardSummary station={station} />
                   </Tooltip>
                   <Popup maxWidth={300} className="station-popup" autoPan={false}>
@@ -338,6 +317,7 @@ export function RoutingView({
         </div>
       )}
 
+      {/* ── Empty state ── */}
       {!isCalculating &&
         routeCoords &&
         routeStations.length === 0 &&
