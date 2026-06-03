@@ -31,6 +31,11 @@ export function useFavorites() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['favorites'] }),
   });
 
+  const clearAllMutation = useMutation({
+    mutationFn: () => api.favorites.clearAll(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['favorites'] }),
+  });
+
   const favoriteIds = new Set((query.data ?? []).map((f) => f.station_id));
 
   return {
@@ -39,5 +44,6 @@ export function useFavorites() {
     isFavorite: (id: number) => favoriteIds.has(id),
     addFavorite: addMutation.mutate,
     removeFavorite: removeMutation.mutate,
+    clearAllFavorites: clearAllMutation.mutate,
   };
 }

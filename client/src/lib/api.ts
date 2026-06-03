@@ -48,6 +48,8 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
       request('/favorites', { method: 'POST', body: JSON.stringify(body) }),
     remove: (stationId: number): Promise<{ ok: boolean }> =>
       request(`/favorites/${stationId}`, { method: 'DELETE' }),
+    clearAll: (): Promise<{ ok: boolean }> =>
+      request('/favorites', { method: 'DELETE' }),
   },
 
   history: {

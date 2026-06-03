@@ -1,6 +1,6 @@
 import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
-import { getFavorites, addFavorite, removeFavorite, isFavorite } from '../db/index.js';
+import { getFavorites, addFavorite, removeFavorite, isFavorite, clearFavorites } from '../db/index.js';
 
 export const favoritesRouter: RouterType = Router();
 
@@ -26,6 +26,11 @@ favoritesRouter.post('/', (req, res) => {
   const { stationId, uuid, name, address, lat, lon } = parsed.data;
   addFavorite(stationId, uuid, name, address, lat, lon);
   return res.status(201).json({ ok: true });
+});
+
+favoritesRouter.delete('/', (_req, res) => {
+  clearFavorites();
+  return res.json({ ok: true });
 });
 
 favoritesRouter.delete('/:stationId', (req, res) => {

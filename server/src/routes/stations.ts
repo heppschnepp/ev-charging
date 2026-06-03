@@ -39,31 +39,28 @@ stationsRouter.get('/search', async (req, res) => {
      let locationKey: string; // For caching and history
 
      // Use GPS coordinates if provided, otherwise geocode city
-     if (lat !== undefined && lon !== undefined) {
-       // Use provided coordinates
-       selected = { lat, lon, displayName: `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}` };
-       locationKey = `gps_lat:${lat}_lon:${lon}`; // Key for caching/history
-     } else {
-       // Geocode city to get coordinates (existing behavior)
-       if (!city) throw new Error('City is required when lat/lon not provided');
-       const geocodeResults = await geocodeCity(city);
-       const primary = geocodeResults[0];
-       selected = primary;
-       locationKey = city.toLowerCase(); // Key for caching/history
-     }
+      if (lat !== undefined && lon !== undefined) {
+        selected = { lat, lon, displayName: `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}` };
+        locationKey = `gps_lat:${lat}_lon:${lon}`;
+      } else {
+        if (!city) throw new Error('City is required when lat/lon not provided');
+        const geocodeResults = await geocodeCity(city);
+        const primary = geocodeResults[0];
+        selected = primary;
+        locationKey = city.toLowerCase();
+      }
 
-     // 2. Check station cache with selected coordinates
-     let stations: ChargingStation[];
-     let cachedAt: string | undefined;
-     const cached = getCachedStations(locationKey, distance, maxResults);
-     if (cached) {
-       stations = JSON.parse(cached.data);
-       cachedAt = cached.cached_at;
-     } else {
-       stations = await fetchStations(selected.lat, selected.lon, distance, maxResults);
-       setCachedStations(locationKey, selected.lat, selected.lon, distance, maxResults, JSON.stringify(stations));
-       addSearchHistory(locationKey, selected.lat, selected.lon, distance, stations.length);
-     }
+      let stations: ChargingStation[];
+      let cachedAt: string | undefined;
+      const cached = getCachedStations(locationKey, distance, maxResults);
+      if (cached) {
+        stations = JSON.parse(cached.data);
+        cachedAt = cached.cached_at;
+      } else {
+        stations = await fetchStations(selected.lat, selected.lon, distance, maxResults);
+        setCachedStations(locationKey, selected.lat, selected.lon, distance, maxResults, JSON.stringify(stations));
+        addSearchHistory(selected.displayName, selected.lat, selected.lon, distance, stations.length);
+      }
 
      // 3. Filter by operator (case-insensitive partial match) if provided
      if (operator && operator.trim()) {

@@ -49,7 +49,7 @@ export function HomePage() {
       searchParams.enabled
     );
 
-   const { favorites, isFavorite, addFavorite, removeFavorite } = useFavorites();
+    const { favorites, isFavorite, addFavorite, removeFavorite, clearAllFavorites } = useFavorites();
    const { data: history = [] } = useHistory();
 
    const handleSearch = (params: { city?: string; lat?: number; lon?: number; distance: number; maxResults: number; operator?: string; power?: number }) => {
@@ -267,12 +267,17 @@ export function HomePage() {
            {/* Sidebar */}
            <aside className="w-72 shrink-0 hidden lg:block">
              <div className="sticky top-24">
-               <Sidebar
-                 favorites={favorites}
-                 history={history}
-                 onRemoveFavorite={removeFavorite}
-                 onSelectHistory={handleHistorySelect}
-               />
+                <Sidebar
+                  favorites={favorites}
+                  history={history}
+                  onRemoveFavorite={removeFavorite}
+                  onSelectHistory={handleHistorySelect}
+                  onClearFavorites={() => {
+                    if (window.confirm(`Clear all ${favorites.length} favourites?`)) {
+                      clearAllFavorites();
+                    }
+                  }}
+                />
              </div>
            </aside>
          </div>

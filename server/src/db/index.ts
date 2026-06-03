@@ -154,6 +154,10 @@ export function removeFavorite(stationId: number) {
   db.prepare(`DELETE FROM favorites WHERE station_id = ?`).run(stationId);
 }
 
+export function clearFavorites() {
+  db.prepare(`DELETE FROM favorites`).run();
+}
+
 export function isFavorite(stationId: number): boolean {
   const row = db
     .prepare(`SELECT 1 FROM favorites WHERE station_id = ?`)

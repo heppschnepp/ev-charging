@@ -7,9 +7,10 @@ interface Props {
   history: SearchHistoryEntry[];
   onRemoveFavorite: (id: number) => void;
   onSelectHistory: (entry: SearchHistoryEntry) => void;
+  onClearFavorites?: () => void;
 }
 
-export function Sidebar({ favorites, history, onRemoveFavorite, onSelectHistory }: Props) {
+export function Sidebar({ favorites, history, onRemoveFavorite, onSelectHistory, onClearFavorites }: Props) {
   return (
     <div className="space-y-6">
       {/* Favourites */}
@@ -17,9 +18,20 @@ export function Sidebar({ favorites, history, onRemoveFavorite, onSelectHistory 
         <div className="flex items-center gap-2 mb-3">
           <Heart size={15} className="text-red-400" />
           <h2 className="text-sm font-semibold text-gray-700">Favourites</h2>
-          <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-            {favorites.length}
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+              {favorites.length}
+            </span>
+            {favorites.length > 0 && onClearFavorites && (
+              <button
+                onClick={onClearFavorites}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors whitespace-nowrap"
+                title="Clear all favourites"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
         </div>
         {favorites.length === 0 ? (
           <p className="text-xs text-gray-400 italic px-1">No favourites yet. Tap the heart on any station.</p>
