@@ -50,7 +50,7 @@ export function HomePage() {
     );
 
     const { favorites, isFavorite, addFavorite, removeFavorite, clearAllFavorites } = useFavorites();
-   const { data: history = [] } = useHistory();
+    const { data: history = [], clearHistory } = useHistory();
 
    const handleSearch = (params: { city?: string; lat?: number; lon?: number; distance: number; maxResults: number; operator?: string; power?: number }) => {
      setActiveFilter('all');
@@ -267,17 +267,22 @@ export function HomePage() {
            {/* Sidebar */}
            <aside className="w-72 shrink-0 hidden lg:block">
              <div className="sticky top-24">
-                <Sidebar
-                  favorites={favorites}
-                  history={history}
-                  onRemoveFavorite={removeFavorite}
-                  onSelectHistory={handleHistorySelect}
-                  onClearFavorites={() => {
-                    if (window.confirm(`Clear all ${favorites.length} favourites?`)) {
-                      clearAllFavorites();
-                    }
-                  }}
-                />
+              <Sidebar
+                favorites={favorites}
+                history={history}
+                onRemoveFavorite={removeFavorite}
+                onSelectHistory={handleHistorySelect}
+                onClearFavorites={() => {
+                  if (window.confirm(`Clear all ${favorites.length} favourites?`)) {
+                    clearAllFavorites();
+                  }
+                }}
+                onClearHistory={() => {
+                  if (window.confirm('Clear all recent searches?')) {
+                    clearHistory();
+                  }
+                }}
+              />
              </div>
            </aside>
          </div>

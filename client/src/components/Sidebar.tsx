@@ -8,9 +8,10 @@ interface Props {
   onRemoveFavorite: (id: number) => void;
   onSelectHistory: (entry: SearchHistoryEntry) => void;
   onClearFavorites?: () => void;
+  onClearHistory?: () => void;
 }
 
-export function Sidebar({ favorites, history, onRemoveFavorite, onSelectHistory, onClearFavorites }: Props) {
+export function Sidebar({ favorites, history, onRemoveFavorite, onSelectHistory, onClearFavorites, onClearHistory }: Props) {
   return (
     <div className="space-y-6">
       {/* Favourites */}
@@ -64,12 +65,23 @@ export function Sidebar({ favorites, history, onRemoveFavorite, onSelectHistory,
         )}
       </div>
 
-      {/* Search history */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Clock size={15} className="text-gray-400" />
-          <h2 className="text-sm font-semibold text-gray-700">Recent searches</h2>
-        </div>
+       {/* Search history */}
+       <div>
+         <div className="flex items-center gap-2 mb-3">
+           <Clock size={15} className="text-gray-400" />
+           <h2 className="text-sm font-semibold text-gray-700">Recent searches</h2>
+           <div className="ml-auto flex items-center gap-2">
+             {history.length > 0 && onClearHistory && (
+               <button
+                 onClick={onClearHistory}
+                 className="text-xs text-gray-400 hover:text-red-500 transition-colors whitespace-nowrap"
+                 title="Clear all recent searches"
+               >
+                 Clear all
+               </button>
+             )}
+           </div>
+         </div>
         {history.length === 0 ? (
           <p className="text-xs text-gray-400 italic px-1">No recent searches.</p>
         ) : (

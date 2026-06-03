@@ -1,12 +1,12 @@
 import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
-import type { ChargingStation } from '../types/index.js';
+import type { ChargingStation } from '../types/index';
 import {
   getCachedStations,
   setCachedStations,
   addSearchHistory,
-} from '../db/index.js';
-import { geocodeCity, fetchStations } from '../middleware/ocm.js';
+} from '../db/index';
+import { geocodeCity, fetchStations, reverseGeocode } from '../middleware/ocm';
 
 export const stationsRouter: RouterType = Router();
 
@@ -38,17 +38,25 @@ stationsRouter.get('/search', async (req, res) => {
      let selected: { lat: number; lon: number; displayName: string };
      let locationKey: string; // For caching and history
 
-     // Use GPS coordinates if provided, otherwise geocode city
-      if (lat !== undefined && lon !== undefined) {
-        selected = { lat, lon, displayName: `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}` };
-        locationKey = `gps_lat:${lat}_lon:${lon}`;
-      } else {
-        if (!city) throw new Error('City is required when lat/lon not provided');
-        const geocodeResults = await geocodeCity(city);
-        const primary = geocodeResults[0];
-        selected = primary;
-        locationKey = city.toLowerCase();
+    // Use GPS coordinates if provided, otherwise geocode city
+    if (lat !== undefined && lon !== undefined) {
+      // Get place name for GPS coordinates via reverse geocoding
+      let displayName: string;
+      try {
+        displayName = await reverseGeocode(lat, lon);
+      } catch (error) {
+        console.warn('Reverse geocoding failed, falling back to coordinates:', error);
+        displayName = `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
       }
+      selected = { lat, lon, displayName };
+      locationKey = `gps_lat:${lat}_lon:${lon}`;
+    } else {
+      if (!city) throw new Error('City is required when lat/lon not provided');
+      const geocodeResults = await geocodeCity(city);
+      const primary = geocodeResults[0];
+      selected = primary;
+      locationKey = city.toLowerCase();
+    }
 
       let stations: ChargingStation[];
       let cachedAt: string | undefined;

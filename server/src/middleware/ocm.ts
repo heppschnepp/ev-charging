@@ -11,6 +11,28 @@ interface GeoLocationOption {
   placeId?: number;
 }
 
+// Reverse geocode coordinates to get a place name
+export async function reverseGeocode(lat: number, lon: number): Promise<string> {
+  const url = `${NOMINATIM_BASE}/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'ev-charging-finder/1.0' },
+  });
+  if (!res.ok) throw new Error(`Reverse geocoding failed: ${res.statusText}`);
+  const data = await res.json();
+  // Return the display name, or construct one from address parts if needed
+  if (data.display_name) {
+    return data.display_name;
+  }
+  // Fallback: construct from address components
+  const address = data.address ?? {};
+  const parts = [
+    address.city || address.town || address.village || address.hamlet,
+    address.state,
+    address.country
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`;
+}
+
 export async function geocodeCity(city: string): Promise<GeoLocationOption[]> {
   const url = `${NOMINATIM_BASE}/search?q=${encodeURIComponent(city)}&format=json&limit=5`;
   const res = await fetch(url, {

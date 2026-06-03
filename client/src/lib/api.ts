@@ -52,7 +52,8 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
       request('/favorites', { method: 'DELETE' }),
   },
 
-  history: {
-    list: (): Promise<SearchHistoryEntry[]> => request('/history'),
-  },
+   history: {
+     list: (): Promise<SearchHistoryEntry[]> => request('/history'),
+     clear: (): Promise<{ ok: boolean }> => request('/history', { method: 'DELETE' }),
+   },
 };

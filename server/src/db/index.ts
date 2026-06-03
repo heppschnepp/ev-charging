@@ -181,7 +181,11 @@ export function getSearchHistory() {
   return db
     .prepare(
       `SELECT city, lat, lon, distance, results, searched_at
-       FROM search_history ORDER BY searched_at DESC LIMIT 20`,
+        FROM search_history ORDER BY searched_at DESC LIMIT 20`,
     )
     .all();
+}
+
+export function clearSearchHistory() {
+  db.prepare(`DELETE FROM search_history`).run();
 }
