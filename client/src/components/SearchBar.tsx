@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Sliders, X, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { geocodeCitySuggestions, type GeoLocation } from '@/utils/routingUtils';
 
 interface Props {
   onSearch: (params: {
@@ -24,9 +25,12 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
   const [power, setPower] = useState(0);
   const [showOptions, setShowOptions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<Array<{ label: string; loc?: GeoLocation }>>([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionAbortRef = useRef<AbortController | null>(null);
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
@@ -80,14 +84,54 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
     );
   };
 
-  const suggestions = history
-    .filter((h) => h.toLowerCase().includes(city.toLowerCase()) && h !== city)
-    .slice(0, 5);
+  const loadSuggestions = (value: string) => {
+    if (value.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    suggestionAbortRef.current?.abort();
+    const controller = new AbortController();
+    suggestionAbortRef.current = controller;
+    geocodeCitySuggestions(value, controller.signal).then((apiResults) => {
+      const lower = value.toLowerCase();
+      const apiItems = apiResults.map((loc) => ({ label: loc.displayName, loc }));
+      const historyMatches = history
+        .filter((h) => h.toLowerCase().includes(lower) && h !== value)
+        .slice(0, 5 - apiItems.length)
+        .map((label) => ({ label, loc: undefined as GeoLocation | undefined }));
+      const combined = [...apiItems, ...historyMatches];
+      setSuggestions(combined);
+      setShowSuggestions(combined.length > 0);
+      setHighlightedIndex(-1);
+    }).catch(() => {
+      const lower = value.toLowerCase();
+      const historyMatches = history
+        .filter((h) => h.toLowerCase().includes(lower) && h !== value)
+        .slice(0, 5)
+        .map((label) => ({ label, loc: undefined as GeoLocation | undefined }));
+      setSuggestions(historyMatches);
+      setShowSuggestions(historyMatches.length > 0);
+      setHighlightedIndex(-1);
+    });
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!city.trim()) return;
     setShowSuggestions(false);
+    const selected = suggestions[highlightedIndex]?.loc;
+    if (selected) {
+      onSearch({
+        lat: selected.lat,
+        lon: selected.lon,
+        distance,
+        maxResults,
+        operator: operator.trim() || undefined,
+        power: power || undefined,
+      });
+      return;
+    }
     onSearch({
       city: city.trim(),
       distance,
@@ -97,22 +141,62 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
     });
   };
 
-  const handleSuggestionSelect = (s: string) => {
-    setCity(s);
+  const handleSuggestionSelect = (item: { label: string; loc?: GeoLocation }) => {
+    setCity(item.label);
     setShowSuggestions(false);
-    onSearch({
-      city: s,
-      distance,
-      maxResults,
-      operator: operator.trim() || undefined,
-      power: power || undefined,
-    });
+    if (item.loc) {
+      onSearch({
+        lat: item.loc.lat,
+        lon: item.loc.lon,
+        distance,
+        maxResults,
+        operator: operator.trim() || undefined,
+        power: power || undefined,
+      });
+    } else {
+      onSearch({
+        city: item.label,
+        distance,
+        maxResults,
+        operator: operator.trim() || undefined,
+        power: power || undefined,
+      });
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCity(value);
+    setShowSuggestions(true);
+    loadSuggestions(value);
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setShowSuggestions(true);
+      setHighlightedIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter') {
+      if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
+        e.preventDefault();
+        handleSuggestionSelect(suggestions[highlightedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setHighlightedIndex(-1);
+    }
   };
 
   useEffect(() => {
     const handleClick = () => setShowSuggestions(false);
     document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
+    return () => {
+      document.removeEventListener('click', handleClick);
+      suggestionAbortRef.current?.abort();
+    };
   }, []);
 
   return (
@@ -146,11 +230,11 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
               ref={inputRef}
               type="text"
               value={city}
-              onChange={(e) => {
-                setCity(e.target.value);
-                setShowSuggestions(true);
+              onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
+              onFocus={() => {
+                if (city.trim().length >= 2) loadSuggestions(city);
               }}
-              onFocus={() => setShowSuggestions(true)}
               onClick={(e) => e.stopPropagation()}
               placeholder="Enter city name…"
               className="w-full text-gray-900 placeholder-gray-400 text-base outline-none bg-transparent pr-8"
@@ -174,18 +258,21 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
             {/* Autocomplete dropdown */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto">
-                {suggestions.map((s) => (
+                {suggestions.map((s, i) => (
                   <button
-                    key={s}
+                    key={s.label}
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSuggestionSelect(s);
                     }}
-                    className="w-full text-left px-4 py-3 text-base text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    onMouseEnter={() => setHighlightedIndex(i)}
+                    className={`w-full text-left px-4 py-3 text-base flex items-center gap-2 ${
+                      i === highlightedIndex ? 'bg-ev-50 text-ev-700' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
                   >
-                    <Search size={16} className="text-gray-400" />
-                    {s}
+                    <Search size={16} className="text-gray-400 shrink-0" />
+                    <span className="truncate">{s.label}</span>
                   </button>
                 ))}
               </div>
