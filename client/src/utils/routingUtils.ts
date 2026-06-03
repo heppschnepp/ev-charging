@@ -106,12 +106,7 @@ export async function fetchRoute(
   end: GeoLocation,
   signal?: AbortSignal,
 ): Promise<RouteResult> {
-  // Proxied through own backend to avoid exposing user locations to a
-  // third-party and to ensure HTTPS. Falls back to direct OSRM for local dev.
-  const url =
-    process.env.NODE_ENV === 'production'
-      ? `/api/route?startLat=${start.lat}&startLon=${start.lon}&endLat=${end.lat}&endLon=${end.lon}`
-      : `https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full&geometries=geojson`;
+  const url = `https://router.project-osrm.org/route/v1/driving/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full&geometries=geojson`;
 
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error('Failed to calculate route');
