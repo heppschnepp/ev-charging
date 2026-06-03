@@ -7,11 +7,13 @@ import { getStationStatus, isFastCharger, formatDistance } from '@/lib/utils';
 import { StationCardSummary } from '@/components/StationCardSummary';
 import {
   geocodeCity,
+  geocodeCitySuggestions,
   fetchRoute,
   fetchStationsAlongRoute,
   sampleRoutePoints,
   formatRouteDuration,
   formatRouteDistance,
+  type GeoLocation,
   type RouteSummary,
 } from '@/utils/routingUtils';
 
@@ -131,14 +133,44 @@ export function RoutingView({
   onSelectStation,
 }: RoutingViewProps) {
   const [routeSummary, setRouteSummary] = useState<RouteSummary | null>(null);
+  const [sourceSuggestions, setSourceSuggestions] = useState<GeoLocation[]>([]);
+  const [destSuggestions, setDestSuggestions] = useState<GeoLocation[]>([]);
+  const [highlightedSource, setHighlightedSource] = useState(-1);
+  const [highlightedDest, setHighlightedDest] = useState(-1);
+  const [showSourceSuggestions, setShowSourceSuggestions] = useState(false);
+  const [showDestSuggestions, setShowDestSuggestions] = useState(false);
+  const [selectedSourceLoc, setSelectedSourceLoc] = useState<GeoLocation | null>(null);
+  const [selectedDestLoc, setSelectedDestLoc] = useState<GeoLocation | null>(null);
 
-  // AbortController ref — cancelled whenever a new calculation starts or the
-  // component unmounts, preventing stale async updates from landing.
   const abortRef = useRef<AbortController | null>(null);
+  const suggestionSourceRef = useRef<AbortController | null>(null);
+  const suggestionDestRef = useRef<AbortController | null>(null);
+  const sourceInputRef = useRef<HTMLInputElement>(null);
+  const destInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    return () => abortRef.current?.abort();
+    return () => {
+      abortRef.current?.abort();
+      suggestionSourceRef.current?.abort();
+      suggestionDestRef.current?.abort();
+    };
   }, []);
+
+  useEffect(() => {
+    if (sourceCity && !selectedSourceLoc) {
+      setShowSourceSuggestions(false);
+      setSourceSuggestions([]);
+      setHighlightedSource(-1);
+    }
+  }, [sourceCity, selectedSourceLoc]);
+
+  useEffect(() => {
+    if (destinationCity && !selectedDestLoc) {
+      setShowDestSuggestions(false);
+      setDestSuggestions([]);
+      setHighlightedDest(-1);
+    }
+  }, [destinationCity, selectedDestLoc]);
 
   const calculateRoute = useCallback(async () => {
     // Cancel any in-flight request
@@ -154,15 +186,11 @@ export function RoutingView({
     setRouteSummary(null);
 
     try {
-      // 1. Geocode both cities in parallel
-      const [sourceLoc, destLoc] = await Promise.all([
-        geocodeCity(sourceCity, signal),
-        geocodeCity(destinationCity, signal),
-      ]);
+      const sourceLoc = selectedSourceLoc ?? (await geocodeCity(sourceCity, signal));
+      const destLoc = selectedDestLoc ?? (await geocodeCity(destinationCity, signal));
 
       if (!sourceLoc) throw new Error(`Could not find "${sourceCity}". Try a more specific name.`);
-      if (!destLoc)
-        throw new Error(`Could not find "${destinationCity}". Try a more specific name.`);
+      if (!destLoc) throw new Error(`Could not find "${destinationCity}". Try a more specific name.`);
 
       // 2. Fetch route (proxied in production, direct OSRM in dev)
       const { coords, summary } = await fetchRoute(sourceLoc, destLoc, signal);
@@ -187,17 +215,131 @@ export function RoutingView({
   }, [
     sourceCity,
     destinationCity,
+    selectedSourceLoc,
+    selectedDestLoc,
     setIsCalculating,
     setRouteError,
     setRouteCoords,
     setRouteStations,
   ]);
 
+  const handleSourceChange = (value: string) => {
+    setSourceCity(value);
+    setSelectedSourceLoc(null);
+    if (value.trim().length >= 2) {
+      suggestionSourceRef.current?.abort();
+      const controller = new AbortController();
+      suggestionSourceRef.current = controller;
+      geocodeCitySuggestions(value, controller.signal).then((results) => {
+        setSourceSuggestions(results);
+        setShowSourceSuggestions(true);
+        setHighlightedSource(-1);
+      });
+    } else {
+      setSourceSuggestions([]);
+      setShowSourceSuggestions(false);
+    }
+  };
+
+  const handleDestChange = (value: string) => {
+    setDestinationCity(value);
+    setSelectedDestLoc(null);
+    if (value.trim().length >= 2) {
+      suggestionDestRef.current?.abort();
+      const controller = new AbortController();
+      suggestionDestRef.current = controller;
+      geocodeCitySuggestions(value, controller.signal).then((results) => {
+        setDestSuggestions(results);
+        setShowDestSuggestions(true);
+        setHighlightedDest(-1);
+      });
+    } else {
+      setDestSuggestions([]);
+      setShowDestSuggestions(false);
+    }
+  };
+
+  const handleSourceKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setShowSourceSuggestions(true);
+      setHighlightedSource((prev) => Math.min(prev + 1, sourceSuggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedSource((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter') {
+      if (highlightedSource >= 0 && sourceSuggestions[highlightedSource]) {
+        e.preventDefault();
+        selectSourceSuggestion(sourceSuggestions[highlightedSource]);
+      } else {
+        handleKeyDown(e);
+      }
+    } else if (e.key === 'Escape') {
+      setShowSourceSuggestions(false);
+    } else {
+      handleKeyDown(e);
+    }
+  };
+
+  const handleDestKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setShowDestSuggestions(true);
+      setHighlightedDest((prev) => Math.min(prev + 1, destSuggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedDest((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter') {
+      if (highlightedDest >= 0 && destSuggestions[highlightedDest]) {
+        e.preventDefault();
+        selectDestSuggestion(destSuggestions[highlightedDest]);
+      } else {
+        handleKeyDown(e);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDestSuggestions(false);
+    } else {
+      handleKeyDown(e);
+    }
+  };
+
+  const selectSourceSuggestion = (loc: GeoLocation) => {
+    setSourceCity(loc.displayName);
+    setSelectedSourceLoc(loc);
+    setShowSourceSuggestions(false);
+    setSourceSuggestions([]);
+    setHighlightedSource(-1);
+    sourceInputRef.current?.focus();
+  };
+
+  const selectDestSuggestion = (loc: GeoLocation) => {
+    setDestinationCity(loc.displayName);
+    setSelectedDestLoc(loc);
+    setShowDestSuggestions(false);
+    setDestSuggestions([]);
+    setHighlightedDest(-1);
+    destInputRef.current?.focus();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && sourceCity && destinationCity && !isCalculating) {
       calculateRoute();
     }
   };
+
+  const handleClickOutside = (e: MouseEvent) => {
+    if (sourceInputRef.current && !sourceInputRef.current.contains(e.target as Node)) {
+      setShowSourceSuggestions(false);
+    }
+    if (destInputRef.current && !destInputRef.current.contains(e.target as Node)) {
+      setShowDestSuggestions(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const hasResults = routeCoords || routeStations.length > 0;
 
@@ -209,27 +351,65 @@ export function RoutingView({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Source City</label>
-            <input
-              type="text"
-              value={sourceCity}
-              onChange={(e) => setSourceCity(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter source city"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-ev-600 focus:border-transparent"
-              disabled={isCalculating}
-            />
+            <div className="relative">
+              <input
+                ref={sourceInputRef}
+                type="text"
+                value={sourceCity}
+                onChange={(e) => handleSourceChange(e.target.value)}
+                onKeyDown={handleSourceKeyDown}
+                placeholder="Enter source city"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-ev-600 focus:border-transparent"
+                disabled={isCalculating}
+                autoComplete="off"
+              />
+              {showSourceSuggestions && sourceSuggestions.length > 0 && (
+                <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {sourceSuggestions.map((loc, i) => (
+                    <li
+                      key={`${loc.lat}-${loc.lon}-${i}`}
+                      onClick={() => selectSourceSuggestion(loc)}
+                      className={`px-3 py-2 cursor-pointer text-sm truncate ${
+                        i === highlightedSource ? 'bg-ev-50 text-ev-700' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      {loc.displayName}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Destination City</label>
-            <input
-              type="text"
-              value={destinationCity}
-              onChange={(e) => setDestinationCity(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter destination city"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-ev-600 focus:border-transparent"
-              disabled={isCalculating}
-            />
+            <div className="relative">
+              <input
+                ref={destInputRef}
+                type="text"
+                value={destinationCity}
+                onChange={(e) => handleDestChange(e.target.value)}
+                onKeyDown={handleDestKeyDown}
+                placeholder="Enter destination city"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-ev-600 focus:border-transparent"
+                disabled={isCalculating}
+                autoComplete="off"
+              />
+              {showDestSuggestions && destSuggestions.length > 0 && (
+                <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {destSuggestions.map((loc, i) => (
+                    <li
+                      key={`${loc.lat}-${loc.lon}-${i}`}
+                      onClick={() => selectDestSuggestion(loc)}
+                      className={`px-3 py-2 cursor-pointer text-sm truncate ${
+                        i === highlightedDest ? 'bg-ev-50 text-ev-700' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      {loc.displayName}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
           <button
             onClick={calculateRoute}

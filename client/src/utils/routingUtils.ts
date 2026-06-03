@@ -5,6 +5,7 @@ import { ChargingStation } from '@/types';
 export interface GeoLocation {
   lat: number;
   lon: number;
+  displayName: string;
 }
 
 export interface RouteSummary {
@@ -94,10 +95,35 @@ export async function geocodeCity(
     if (!res.ok) return null;
     const data = await res.json();
     if (!data?.length) return null;
-    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), displayName: data[0].display_name };
   } catch (err) {
     if ((err as Error).name === 'AbortError') throw err;
     return null;
+  }
+}
+
+export async function geocodeCitySuggestions(
+  city: string,
+  signal?: AbortSignal,
+): Promise<GeoLocation[]> {
+  if (!city.trim() || city.trim().length < 2) return [];
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=5`,
+      {
+        headers: { 'User-Agent': 'ev-charging-finder/1.0' },
+        signal,
+      },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data ?? []).map((item: { lat: string; lon: string; display_name: string }) => ({
+      lat: parseFloat(item.lat),
+      lon: parseFloat(item.lon),
+      displayName: item.display_name,
+    }));
+  } catch {
+    return [];
   }
 }
 
