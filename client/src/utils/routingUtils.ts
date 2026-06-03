@@ -79,23 +79,32 @@ export function sampleRoutePoints(
 
 // ─── API Calls ────────────────────────────────────────────────────────────────
 
+async function nominatimSearch(
+  query: string,
+  limit = 1,
+  signal?: AbortSignal,
+): Promise<GeoLocation[]> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=${limit}`,
+    { headers: { 'User-Agent': 'ev-charging-finder/1.0' }, signal },
+  );
+  if (!res.ok) return [];
+  const data = (await res.json()) as { lat: string; lon: string; display_name: string }[];
+  return (data ?? []).map((item) => ({
+    lat: parseFloat(item.lat),
+    lon: parseFloat(item.lon),
+    displayName: item.display_name,
+  }));
+}
+
 export async function geocodeCity(
   city: string,
   signal?: AbortSignal,
 ): Promise<GeoLocation | null> {
   if (!city.trim()) return null;
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
-      {
-        headers: { 'User-Agent': 'ev-charging-finder/1.0' },
-        signal,
-      },
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data?.length) return null;
-    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), displayName: data[0].display_name };
+    const results = await nominatimSearch(city, 1, signal);
+    return results[0] ?? null;
   } catch (err) {
     if ((err as Error).name === 'AbortError') throw err;
     return null;
@@ -108,20 +117,7 @@ export async function geocodeCitySuggestions(
 ): Promise<GeoLocation[]> {
   if (!city.trim() || city.trim().length < 2) return [];
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=5`,
-      {
-        headers: { 'User-Agent': 'ev-charging-finder/1.0' },
-        signal,
-      },
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data ?? []).map((item: { lat: string; lon: string; display_name: string }) => ({
-      lat: parseFloat(item.lat),
-      lon: parseFloat(item.lon),
-      displayName: item.display_name,
-    }));
+    return await nominatimSearch(city, 5, signal);
   } catch {
     return [];
   }

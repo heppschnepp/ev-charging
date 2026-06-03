@@ -26,7 +26,6 @@ export function CityAutocomplete({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<Array<{ label: string; loc?: GeoLocation }>>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -40,6 +39,15 @@ export function CityAutocomplete({
     setHighlightedIndex(-1);
   }, [value]);
 
+  const buildHistoryMatches = useCallback(
+    (query: string, limit: number) =>
+      history
+        .filter((h) => h.toLowerCase().includes(query.toLowerCase()) && h !== query)
+        .slice(0, limit)
+        .map((label) => ({ label, loc: undefined as GeoLocation | undefined })),
+    [history],
+  );
+
   const loadSuggestions = useCallback(
     (query: string) => {
       if (query.trim().length < 2) {
@@ -52,27 +60,18 @@ export function CityAutocomplete({
       abortRef.current = controller;
       geocodeCitySuggestions(query, controller.signal).then((apiResults) => {
         const apiItems = apiResults.map((loc) => ({ label: loc.displayName, loc }));
-        const lower = query.toLowerCase();
-        const historyMatches = history
-          .filter((h) => h.toLowerCase().includes(lower) && h !== query)
-          .slice(0, Math.max(0, 5 - apiItems.length))
-          .map((label) => ({ label, loc: undefined as GeoLocation | undefined }));
-        const combined = [...apiItems, ...historyMatches];
+        const combined = [...apiItems, ...buildHistoryMatches(query, Math.max(0, 5 - apiItems.length))];
         setSuggestions(combined);
         setShowSuggestions(combined.length > 0);
         setHighlightedIndex(-1);
       }).catch(() => {
-        const lower = query.toLowerCase();
-        const historyMatches = history
-          .filter((h) => h.toLowerCase().includes(lower) && h !== query)
-          .slice(0, 5)
-          .map((label) => ({ label, loc: undefined as GeoLocation | undefined }));
-        setSuggestions(historyMatches);
-        setShowSuggestions(historyMatches.length > 0);
+        const fallback = buildHistoryMatches(query, 5);
+        setSuggestions(fallback);
+        setShowSuggestions(fallback.length > 0);
         setHighlightedIndex(-1);
       });
     },
-    [history],
+    [buildHistoryMatches],
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,7 +118,6 @@ export function CityAutocomplete({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <input
-        ref={inputRef}
         type="text"
         value={value}
         onChange={handleChange}

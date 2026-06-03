@@ -142,7 +142,8 @@ export function RoutingView({
     return () => abortRef.current?.abort();
   }, []);
 
-  const calculateRoute = useCallback(async () => {
+  const calculateRoute = useCallback(async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -204,7 +205,7 @@ export function RoutingView({
   return (
     <div className="space-y-6">
       {/* ── Input Panel ── */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <form onSubmit={calculateRoute} className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">EV Route Planner</h2>
         <div className="space-y-4">
           <div>
@@ -228,7 +229,7 @@ export function RoutingView({
             />
           </div>
           <button
-            onClick={calculateRoute}
+            type="submit"
             disabled={isCalculating || !sourceCity || !destinationCity}
             className={`w-full flex items-center justify-center px-4 py-2 bg-ev-600 text-white rounded-md hover:bg-ev-700 transition-colors disabled:opacity-50 ${
               isCalculating ? 'animate-pulse' : ''
@@ -243,7 +244,7 @@ export function RoutingView({
             </div>
           )}
         </div>
-      </div>
+      </form>
 
       {/* ── Route Summary ── */}
       {routeSummary && (
