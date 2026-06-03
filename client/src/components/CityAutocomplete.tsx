@@ -27,6 +27,7 @@ export function CityAutocomplete({
   const [suggestions, setSuggestions] = useState<Array<{ label: string; loc?: GeoLocation }>>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -107,7 +108,7 @@ export function CityAutocomplete({
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
+      if (!containerRef.current?.contains(e.target as Node)) {
         setShowSuggestions(false);
       }
     };
@@ -116,7 +117,7 @@ export function CityAutocomplete({
   }, []);
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative ${className}`}>
       <input
         ref={inputRef}
         type="text"
