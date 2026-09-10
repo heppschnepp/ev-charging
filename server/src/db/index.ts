@@ -57,11 +57,20 @@ export function initDb() {
       results   INTEGER NOT NULL,
       searched_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS reverse_geocode_cache (
+      lat_rounded INTEGER NOT NULL,
+      lon_rounded INTEGER NOT NULL,
+      display_name TEXT NOT NULL,
+      cached_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (lat_rounded, lon_rounded)
+    );
   `);
 
   // Clear stale cache entries on startup (older than 1 hour)
   db.prepare(`DELETE FROM geocode_cache WHERE cached_at < datetime('now', '-1 hour')`).run();
   db.prepare(`DELETE FROM station_cache WHERE cached_at < datetime('now', '-1 hour')`).run();
+  db.prepare(`DELETE FROM reverse_geocode_cache WHERE cached_at < datetime('now', '-1 hour')`).run();
 
   console.log('✅ Database initialised at', DB_PATH);
 }
@@ -73,8 +82,8 @@ export function getCachedGeocode(city: string) {
   const row = db
     .prepare(
       `SELECT * FROM geocode_cache
-       WHERE lower(city) = lower(?)
-       AND cached_at >= datetime('now', '-1 hour')`,
+        WHERE lower(city) = lower(?)
+        AND cached_at >= datetime('now', '-1 hour')`,
     )
     .get(city) as
     | { lat: number; lon: number; display_name: string; cached_at: string }
@@ -87,6 +96,29 @@ export function setCachedGeocode(city: string, lat: number, lon: number, display
     `INSERT OR REPLACE INTO geocode_cache (city, lat, lon, display_name, cached_at)
      VALUES (?, ?, ?, ?, datetime('now'))`,
   ).run(city, lat, lon, displayName);
+}
+
+export function getCachedReverseGeocode(lat: number, lon: number): string | null {
+  // Round to 4 decimal places (about 11 meters precision)
+  const latRounded = Math.round(lat * 10000);
+  const lonRounded = Math.round(lon * 10000);
+  const row = db
+    .prepare(
+      `SELECT display_name FROM reverse_geocode_cache
+        WHERE lat_rounded = ? AND lon_rounded = ?
+        AND cached_at >= datetime('now', '-1 hour')`,
+    )
+    .get(latRounded, lonRounded) as { display_name: string } | undefined;
+  return row?.display_name ?? null;
+}
+
+export function setCachedReverseGeocode(lat: number, lon: number, displayName: string) {
+  const latRounded = Math.round(lat * 10000);
+  const lonRounded = Math.round(lon * 10000);
+  db.prepare(
+    `INSERT OR REPLACE INTO reverse_geocode_cache (lat_rounded, lon_rounded, display_name, cached_at)
+     VALUES (?, ?, ?, datetime('now'))`,
+  ).run(latRounded, lonRounded, displayName);
 }
 
 export function getCachedStations(

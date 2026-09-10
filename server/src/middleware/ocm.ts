@@ -1,4 +1,5 @@
 import type { ChargingStation, GeoLocation } from '../types/index.js';
+import { getCachedReverseGeocode, setCachedReverseGeocode } from '../db/index';
 
 const OCM_BASE = process.env.OCM_BASE_URL ?? 'https://api.openchargemap.io/v3';
 const OCM_KEY = process.env.OCM_API_KEY ?? '';
@@ -13,24 +14,40 @@ interface GeoLocationOption {
 
 // Reverse geocode coordinates to get a place name
 export async function reverseGeocode(lat: number, lon: number): Promise<string> {
+  // Try to get from cache first
+  const cached = getCachedReverseGeocode(lat, lon);
+  if (cached !== null) {
+    return cached;
+  }
+
+  // If not in cache, call the Nominatim API
   const url = `${NOMINATIM_BASE}/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
   const res = await fetch(url, {
     headers: { 'User-Agent': 'ev-charging-finder/1.0' },
   });
-  if (!res.ok) throw new Error(`Reverse geocoding failed: ${res.statusText}`);
+  if (!res.ok) {
+    throw new Error(`Reverse geocoding failed: ${res.statusText}`);
+  }
   const data = await res.json();
   // Return the display name, or construct one from address parts if needed
+  let displayName: string;
   if (data.display_name) {
-    return data.display_name;
+    displayName = data.display_name;
+  } else {
+    // Fallback: construct from address components
+    const address = data.address ?? {};
+    const parts = [
+      address.city || address.town || address.village || address.hamlet,
+      address.state,
+      address.country
+    ].filter(Boolean);
+    displayName = parts.length > 0 ? parts.join(', ') : `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`;
   }
-  // Fallback: construct from address components
-  const address = data.address ?? {};
-  const parts = [
-    address.city || address.town || address.village || address.hamlet,
-    address.state,
-    address.country
-  ].filter(Boolean);
-  return parts.length > 0 ? parts.join(', ') : `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`;
+
+  // Cache the result
+  setCachedReverseGeocode(lat, lon, displayName);
+
+  return displayName;
 }
 
 export async function geocodeCity(city: string): Promise<GeoLocationOption[]> {
