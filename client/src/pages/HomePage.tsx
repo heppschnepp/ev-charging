@@ -82,7 +82,11 @@ export function HomePage() {
       all: s.length,
       operational: s.filter((x) => x.isOperational === true).length,
       fast: s.filter(isFastCharger).length,
-      free: s.filter((x) => x.usageTypeTitle?.toLowerCase().includes('free') ?? false).length,
+      free: s.filter((x) => {
+        const cost = (x.usageCost ?? '').toLowerCase().trim();
+        if (!cost || cost === 'free' || cost === '0' || cost === '0.00') return true;
+        return x.usageTypeTitle?.toLowerCase().includes('free') ?? false;
+      }).length,
     };
   }, [data]);
 

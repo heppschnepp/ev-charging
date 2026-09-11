@@ -5,6 +5,8 @@ import {
   getCachedStations,
   setCachedStations,
   addSearchHistory,
+  getCachedGeocode,
+  setCachedGeocode,
 } from '../db/index';
 import { geocodeCity, fetchStations, reverseGeocode } from '../middleware/ocm';
 
@@ -52,9 +54,15 @@ stationsRouter.get('/search', async (req, res) => {
       locationKey = `gps_lat:${lat}_lon:${lon}`;
     } else {
       if (!city) throw new Error('City is required when lat/lon not provided');
-      const geocodeResults = await geocodeCity(city);
-      const primary = geocodeResults[0];
-      selected = primary;
+      const cachedGeocode = getCachedGeocode(city);
+      if (cachedGeocode) {
+        selected = { lat: cachedGeocode.lat, lon: cachedGeocode.lon, displayName: cachedGeocode.display_name };
+      } else {
+        const geocodeResults = await geocodeCity(city);
+        const primary = geocodeResults[0];
+        selected = primary;
+        setCachedGeocode(city, selected.lat, selected.lon, selected.displayName);
+      }
       locationKey = city.toLowerCase();
     }
 

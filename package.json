@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "description": "EV Charging Station Finder",
-  "packageManager": "pnpm@11.5.0",
+  "packageManager": "pnpm@12.4.0",
   "scripts": {
     "dev": "concurrently \"pnpm --filter ev-server dev\" \"pnpm --filter ev-client dev\"",
     "build": "pnpm --parallel --filter \"*\" build",
@@ -20,20 +20,20 @@
     "server:start": "pnpm --filter ev-server start"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
-    "@types/node": "^22.19.19",
-    "concurrently": "^9.2.1",
-    "eslint": "^9.39.4",
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^22.20.2",
+    "concurrently": "^9.2.4",
+    "eslint": "^9.39.5",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^15.15.0",
-    "prettier": "^3.8.3",
+    "prettier": "^3.9.6",
     "typescript": "~5.5.4"
   },
   "engines": {
     "node": ">=18.0.0",
-    "pnpm": ">=9.0.0"
+    "pnpm": ">=12.0.0"
   },
   "workspaces": [
     "client",

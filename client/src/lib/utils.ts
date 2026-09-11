@@ -42,9 +42,11 @@ export function filterStations(stations: ChargingStation[], filter: FilterType):
     case 'fast':
       return stations.filter(isFastCharger);
     case 'free':
-      return stations.filter(
-        (s) => s.usageTypeTitle?.toLowerCase().includes('free') ?? false,
-      );
+      return stations.filter((s) => {
+        const cost = (s.usageCost ?? '').toLowerCase().trim();
+        if (!cost || cost === 'free' || cost === '0' || cost === '0.00') return true;
+        return s.usageTypeTitle?.toLowerCase().includes('free') ?? false;
+      });
     default:
       return stations;
   }
