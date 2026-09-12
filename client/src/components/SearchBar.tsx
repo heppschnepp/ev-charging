@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Search, Sliders, X, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
-import type { GeoLocation } from '@/utils/routingUtils';
+import type { GeoLocation } from '@/types';
 
 interface Props {
   onSearch: (params: {
@@ -54,9 +54,15 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
       },
       (error) => {
         let message = 'Unknown error';
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isStandalone = (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            message = 'Location access denied. Please enable location services.';
+            if (isIOS && isStandalone) {
+              message = 'Location access denied. Open this app in Safari, allow location access, then add it back to your Home Screen.';
+            } else {
+              message = 'Location access denied. Please enable location services in your browser settings.';
+            }
             break;
           case error.POSITION_UNAVAILABLE:
             message = 'Location information is unavailable.';
@@ -65,7 +71,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
             message = 'The request to get user location timed out.';
             break;
           default:
-            message = `An unknown error occurred: error.code`;
+            message = `An unknown error occurred: ${error.code}`;
         }
         setLocationError(message);
         setIsFetchingLocation(false);

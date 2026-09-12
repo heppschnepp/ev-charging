@@ -1,12 +1,4 @@
-import { ChargingStation } from '@/types';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface GeoLocation {
-  lat: number;
-  lon: number;
-  displayName: string;
-}
+import { ChargingStation, type GeoLocation } from '@/types';
 
 export interface RouteSummary {
   distanceMeters: number;
@@ -79,11 +71,30 @@ export function sampleRoutePoints(
 
 // ─── API Calls ────────────────────────────────────────────────────────────────
 
+const NOMINATIM_MIN_DELAY_MS = 1100;
+let nominatimLastRequest = 0;
+
+async function nominatimDelay(signal?: AbortSignal) {
+  const now = Date.now();
+  const wait = Math.max(0, NOMINATIM_MIN_DELAY_MS - (now - nominatimLastRequest));
+  if (wait > 0) {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(resolve, wait);
+      signal?.addEventListener('abort', () => {
+        clearTimeout(timeout);
+        reject(new Error('Aborted'));
+      }, { once: true });
+    });
+  }
+  nominatimLastRequest = Date.now();
+}
+
 async function nominatimSearch(
   query: string,
   limit = 1,
   signal?: AbortSignal,
 ): Promise<GeoLocation[]> {
+  await nominatimDelay(signal);
   const res = await fetch(
     `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=${limit}`,
     { headers: { 'User-Agent': 'ev-charging-finder/1.0' }, signal },

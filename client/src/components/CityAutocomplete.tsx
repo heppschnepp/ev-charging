@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Search } from 'lucide-react';
-import { geocodeCitySuggestions, type GeoLocation } from '@/utils/routingUtils';
+import { geocodeCitySuggestions } from '@/utils/routingUtils';
+import type { GeoLocation } from '@/types';
 
 export interface CityAutocompleteProps {
   value: string;

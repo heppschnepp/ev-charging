@@ -13,9 +13,9 @@ import {
   sampleRoutePoints,
   formatRouteDuration,
   formatRouteDistance,
-  type GeoLocation,
   type RouteSummary,
 } from '@/utils/routingUtils';
+import type { GeoLocation } from '@/types';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 

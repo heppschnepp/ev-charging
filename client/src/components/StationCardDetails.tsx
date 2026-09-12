@@ -6,17 +6,8 @@ import {
 import {
   cn, getStationStatus, getMaxPower, isFastCharger,
   formatDistance, formatPower, formatDate, getConnectorBadgeColor,
+  STATUS_CONFIG, getTotalConnectors,
 } from '@/lib/utils';
-
-function getTotalConnectors(station: ChargingStation): number {
-  return station.connections.reduce((sum, c) => sum + (c.quantity ?? 1), 0);
-}
-
-const STATUS_CONFIG = {
-  operational: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50', label: 'Operational', badge: 'bg-green-100 text-green-800' },
-  planned:     { icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-50',  label: 'Not operational', badge: 'bg-amber-100 text-amber-800' },
-  unknown:     { icon: HelpCircle,  color: 'text-gray-400',  bg: 'bg-gray-50',   label: 'Unknown',   badge: 'bg-gray-100 text-gray-600' },
-};
 
 interface StationCardDetailsProps {
   station: ChargingStation;

@@ -29,10 +29,10 @@ const SearchSchema = z.object({
 );
 
 stationsRouter.get('/search', async (req, res) => {
-   const parsed = SearchSchema.safeParse(req.query);
-   if (!parsed.success) {
-     return res.status(400).json({ message: 'Invalid parameters', code: 'INVALID_PARAMS', details: parsed.error.flatten() });
-   }
+    const parsed = SearchSchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ message: 'Invalid parameters', code: 'INVALID_PARAMS' });
+    }
 
    const { city, lat, lon, distance, maxResults, operator, power } = parsed.data;
 

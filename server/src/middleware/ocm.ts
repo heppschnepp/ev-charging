@@ -54,7 +54,7 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string> 
           let body = '';
           try {
             body = await res.text();
-          } catch {}
+          } catch { /* ignore */ }
           throw new Error(`Reverse geocoding failed ${res.status}: ${res.statusText}${body ? ` - ${body.slice(0, 500)}` : ''}`);
         }
         const data = await res.json();
@@ -103,7 +103,7 @@ export async function geocodeCity(city: string): Promise<GeoLocationOption[]> {
           let body = '';
           try {
             body = await res.text();
-          } catch {}
+          } catch { /* ignore */ }
           throw new Error(`Geocoding failed ${res.status}: ${res.statusText}${body ? ` - ${body.slice(0, 500)}` : ''}`);
         }
         const data = (await res.json()) as {
@@ -200,7 +200,7 @@ export async function fetchStations(
     let body = '';
     try {
       body = await res.text();
-    } catch {}
+    } catch { /* ignore */ }
     throw new Error(`OCM API error ${res.status}: ${res.statusText}${body ? ` - ${body.slice(0, 500)}` : ''}`);
   }
   const raw = (await res.json()) as OcmRaw[];

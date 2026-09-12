@@ -12,6 +12,11 @@ const PORT = parseInt(process.env.PORT ?? '3001', 10);
 app.use(cors({ origin: process.env.CORS_ORIGIN === '*' ? true : (process.env.CORS_ORIGIN ?? 'http://localhost:5173') }));
 app.use(express.json());
 
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'geolocation=(self)');
+  next();
+});
+
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });

@@ -1,9 +1,16 @@
 import type { ChargingStation, FilterType } from '@/types';
 import { clsx, type ClassValue } from 'clsx';
+import { CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
+
+export const STATUS_CONFIG = {
+  operational: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50', label: 'Operational', badge: 'bg-green-100 text-green-800' },
+  planned:     { icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-50',  label: 'Not operational', badge: 'bg-amber-100 text-amber-800' },
+  unknown:     { icon: HelpCircle,  color: 'text-gray-400',  bg: 'bg-gray-50',   label: 'Unknown',   badge: 'bg-gray-100 text-gray-600' },
+} as const;
 
 export function getStationStatus(station: ChargingStation): 'operational' | 'planned' | 'unknown' {
   if (station.isOperational === true) return 'operational';
