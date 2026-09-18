@@ -65,12 +65,42 @@ export function initDb() {
       cached_at   TEXT NOT NULL DEFAULT (datetime('now')),
       PRIMARY KEY (lat_rounded, lon_rounded)
     );
+
+    CREATE TABLE IF NOT EXISTS vehicles (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      external_id TEXT UNIQUE,
+      brand       TEXT NOT NULL,
+      model       TEXT NOT NULL,
+      variant_name TEXT,
+      model_year  INTEGER,
+      range_km    INTEGER NOT NULL,
+      charge_time_10_80_min INTEGER,
+      charge_time_10_100_min INTEGER,
+      added_at    TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS car_cache (
+      cache_key TEXT PRIMARY KEY,
+      data      TEXT NOT NULL,
+      cached_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
+
+  // Migrations for existing databases
+  const vehicleCols = db.prepare(`PRAGMA table_info(vehicles)`).all() as { name: string }[];
+  const vehicleColNames = new Set(vehicleCols.map((c) => c.name));
+  if (!vehicleColNames.has('charge_time_10_80_min')) {
+    db.exec(`ALTER TABLE vehicles ADD COLUMN charge_time_10_80_min INTEGER`);
+  }
+  if (!vehicleColNames.has('charge_time_10_100_min')) {
+    db.exec(`ALTER TABLE vehicles ADD COLUMN charge_time_10_100_min INTEGER`);
+  }
 
   // Clear stale cache entries on startup (older than 1 hour)
   db.prepare(`DELETE FROM geocode_cache WHERE cached_at < datetime('now', '-1 hour')`).run();
   db.prepare(`DELETE FROM station_cache WHERE cached_at < datetime('now', '-1 hour')`).run();
   db.prepare(`DELETE FROM reverse_geocode_cache WHERE cached_at < datetime('now', '-1 hour')`).run();
+  db.prepare(`DELETE FROM car_cache WHERE cached_at < datetime('now', '-1 hour')`).run();
 
   console.log('✅ Database initialised at', DB_PATH);
 }
@@ -220,4 +250,116 @@ export function getSearchHistory() {
 
 export function clearSearchHistory() {
   db.prepare(`DELETE FROM search_history`).run();
+}
+
+// ── Vehicle inventory ─────────────────────────────────────────────────────────
+
+export interface VehicleRow {
+  id: number;
+  external_id: string | null;
+  brand: string;
+  model: string;
+  variant_name: string | null;
+  model_year: number | null;
+  range_km: number;
+  charge_time_10_80_min: number | null;
+  charge_time_10_100_min: number | null;
+  added_at: string;
+}
+
+export function getVehicles(): VehicleRow[] {
+  return db
+    .prepare(`SELECT * FROM vehicles ORDER BY added_at DESC`)
+    .all() as VehicleRow[];
+}
+
+export function addVehicle(
+  brand: string,
+  model: string,
+  rangeKm: number,
+  externalId?: string | null,
+  variantName?: string | null,
+  modelYear?: number | null,
+  chargeTime10To80Min?: number | null,
+  chargeTime10To100Min?: number | null,
+): number {
+  const res = db
+    .prepare(
+      `INSERT INTO vehicles (external_id, brand, model, variant_name, model_year, range_km, charge_time_10_80_min, charge_time_10_100_min)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      externalId ?? null,
+      brand,
+      model,
+      variantName ?? null,
+      modelYear ?? null,
+      rangeKm,
+      chargeTime10To80Min ?? null,
+      chargeTime10To100Min ?? null,
+    );
+  return Number(res.lastInsertRowid);
+}
+
+export function updateVehicle(
+  id: number,
+  patch: {
+    brand?: string;
+    model?: string;
+    variantName?: string | null;
+    modelYear?: number | null;
+    rangeKm?: number;
+    chargeTime10To80Min?: number | null;
+    chargeTime10To100Min?: number | null;
+  },
+) {
+  const current = db.prepare(`SELECT * FROM vehicles WHERE id = ?`).get(id) as
+    | VehicleRow
+    | undefined;
+  if (!current) return false;
+
+  db.prepare(
+    `UPDATE vehicles SET
+       brand = ?, model = ?, variant_name = ?, model_year = ?, range_km = ?,
+       charge_time_10_80_min = ?, charge_time_10_100_min = ?
+     WHERE id = ?`,
+  ).run(
+    patch.brand ?? current.brand,
+    patch.model ?? current.model,
+    patch.variantName === undefined ? current.variant_name : patch.variantName,
+    patch.modelYear === undefined ? current.model_year : patch.modelYear,
+    patch.rangeKm ?? current.range_km,
+    patch.chargeTime10To80Min === undefined ? current.charge_time_10_80_min : patch.chargeTime10To80Min,
+    patch.chargeTime10To100Min === undefined ? current.charge_time_10_100_min : patch.chargeTime10To100Min,
+    id,
+  );
+  return true;
+}
+
+export function removeVehicle(id: number) {
+  db.prepare(`DELETE FROM vehicles WHERE id = ?`).run(id);
+}
+
+export function vehicleExistsByExternalId(externalId: string): boolean {
+  return !!db.prepare(`SELECT 1 FROM vehicles WHERE external_id = ?`).get(externalId);
+}
+
+// ── EVDB catalogue cache ──────────────────────────────────────────────────────
+
+export function getCachedCars(): string | null {
+  const row = db
+    .prepare(
+      `SELECT data FROM car_cache
+       WHERE cache_key = 'all'
+       AND cached_at >= datetime('now', '-1 hour')`,
+    )
+    .get() as { data: string } | undefined;
+  return row?.data ?? null;
+}
+
+export function setCachedCars(data: string) {
+  db.prepare(
+    `INSERT OR REPLACE INTO car_cache (cache_key, data, cached_at)
+     VALUES ('all', ?, datetime('now'))`,
+  ).run(data);
 }

@@ -1,14 +1,14 @@
 import { Router, type Router as RouterType } from 'express';
 import { z } from 'zod';
-import type { ChargingStation } from '../types/index';
+import type { ChargingStation } from '../types/index.js';
 import {
   getCachedStations,
   setCachedStations,
   addSearchHistory,
   getCachedGeocode,
   setCachedGeocode,
-} from '../db/index';
-import { geocodeCity, fetchStations, reverseGeocode } from '../middleware/ocm';
+} from '../db/index.js';
+import { geocodeCity, fetchStations, reverseGeocode } from '../middleware/ocm.js';
 
 export const stationsRouter: RouterType = Router();
 

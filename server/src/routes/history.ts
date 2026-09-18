@@ -1,5 +1,5 @@
 import { Router, type Router as RouterType } from 'express';
-import { getSearchHistory, clearSearchHistory } from '../db/index';
+import { getSearchHistory, clearSearchHistory } from '../db/index.js';
 
 export const historyRouter: RouterType = Router();
 

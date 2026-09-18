@@ -1,5 +1,5 @@
 import type { ChargingStation, GeoLocation } from '../types/index.js';
-import { getCachedReverseGeocode, setCachedReverseGeocode } from '../db/index';
+import { getCachedReverseGeocode, setCachedReverseGeocode } from '../db/index.js';
 
 const OCM_BASE = process.env.OCM_BASE_URL ?? 'https://api.openchargemap.io/v3';
 const OCM_KEY = process.env.OCM_API_KEY ?? '';

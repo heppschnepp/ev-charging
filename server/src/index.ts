@@ -5,6 +5,7 @@ import { initDb } from './db/index.js';
 import { stationsRouter } from './routes/stations.js';
 import { favoritesRouter } from './routes/favorites.js';
 import { historyRouter } from './routes/history.js';
+import { carsRouter } from './routes/cars.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
@@ -26,6 +27,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/stations', stationsRouter);
 app.use('/api/favorites', favoritesRouter);
 app.use('/api/history', historyRouter);
+app.use('/api/cars', carsRouter);
 
 // 404
 app.use((_req, res) => {

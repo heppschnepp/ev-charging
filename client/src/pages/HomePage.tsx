@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Zap, MapPin, Share2 } from 'lucide-react';
+import { Zap, MapPin, Share2, BatteryCharging } from 'lucide-react';
 import { SearchBar } from '@/components/SearchBar';
 import { StationCard } from '@/components/StationCard';
 import { SummaryBar } from '@/components/SummaryBar';
@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { StationMap } from '@/components/StationMap';
 import { StationCardDetails } from '@/components/StationCardDetails';
 import { RoutingView } from '@/components/RoutingView';
+import { ChargePlanView } from '@/components/ChargePlanView';
 import { useStations } from '@/hooks/useStations';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useHistory } from '@/hooks/useHistory';
@@ -27,7 +28,7 @@ export function HomePage() {
   }>({ city: '', distance: 10, maxResults: 20, enabled: false });
 
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [viewMode, setViewMode] = useState<'list' | 'map' | 'routing'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'map' | 'routing' | 'plan'>('list');
    const [selectedStation, setSelectedStation] = useState<ChargingStation | null>(null);
 
    // Routing state
@@ -143,10 +144,21 @@ export function HomePage() {
               >
                 Routing
               </button>
+              <button
+                onClick={() => setViewMode('plan')}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-1',
+                  viewMode === 'plan'
+                    ? 'bg-ev-600 text-white'
+                    : 'text-gray-500 hover:bg-gray-100'
+                )}
+              >
+                <BatteryCharging size={14} /> Plan
+              </button>
             </div>
           </div>
-          
-           {viewMode !== 'routing' && (
+
+           {viewMode !== 'routing' && viewMode !== 'plan' && (
              <SearchBar
                onSearch={handleSearch}
                isLoading={isLoading}
@@ -249,6 +261,10 @@ export function HomePage() {
                    onSelectStation={setSelectedStation}
                   />
                 )}
+
+              {viewMode === 'plan' && (
+                <ChargePlanView />
+              )}
                {/* Selected station details - show when a station is selected */}
               {selectedStation && (
                 <div className="mt-6">

@@ -1,6 +1,7 @@
 import { Heart, Clock, MapPin, Trash2 } from 'lucide-react';
 import type { FavoriteStation, SearchHistoryEntry } from '@/types';
 import { formatDistance } from '@/lib/utils';
+import { CarSettingsPanel } from '@/components/CarSettingsPanel';
 
 interface Props {
   favorites: FavoriteStation[];
@@ -14,6 +15,9 @@ interface Props {
 export function Sidebar({ favorites, history, onRemoveFavorite, onSelectHistory, onClearFavorites, onClearHistory }: Props) {
   return (
     <div className="space-y-6">
+      {/* Settings */}
+      <CarSettingsPanel />
+
       {/* Favourites */}
       <div>
         <div className="flex items-center gap-2 mb-3">
