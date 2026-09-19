@@ -25,14 +25,14 @@ export function FilterBar({ active, onChange, counts }: Props) {
             'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all',
             active === f.id
               ? 'bg-ev-600 text-white shadow-sm'
-              : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300',
+              : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700',
           )}
         >
           {f.label}
           <span
             className={cn(
               'text-xs px-1.5 py-0.5 rounded-full',
-              active === f.id ? 'bg-ev-700 text-ev-100' : 'bg-gray-100 text-gray-500',
+              active === f.id ? 'bg-ev-700 text-ev-100' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
             )}
           >
             {counts[f.id]}

@@ -6,6 +6,7 @@ import { ChargingStation } from '@/types';
 import { getStationStatus, isFastCharger, formatDistance } from '@/lib/utils';
 import { StationCardSummary } from '@/components/StationCardSummary';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
+import { FullscreenMap, MapResizeOnFullscreen } from '@/components/FullscreenMap';
 import {
   geocodeCity,
   fetchRoute,
@@ -16,6 +17,7 @@ import {
   type RouteSummary,
 } from '@/utils/routingUtils';
 import type { GeoLocation } from '@/types';
+import { useTheme, MAP_TILE_URLS, MAP_TILE_ATTRIBUTIONS } from '@/hooks/useTheme';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -55,8 +57,8 @@ function RouteSummaryBanner({
   stationCount: number;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-4 px-4 py-3 bg-ev-50 border border-ev-200 rounded-lg text-sm">
-      <div className="flex items-center gap-1.5 text-ev-700 font-medium">
+    <div className="flex flex-wrap items-center gap-4 px-4 py-3 bg-ev-50 dark:bg-ev-900/30 border border-ev-200 dark:border-ev-800 rounded-lg text-sm">
+      <div className="flex items-center gap-1.5 text-ev-700 dark:text-ev-400 font-medium">
         <svg
           className="w-4 h-4"
           viewBox="0 0 24 24"
@@ -68,7 +70,7 @@ function RouteSummaryBanner({
         </svg>
         {formatRouteDistance(summary.distanceMeters)}
       </div>
-      <div className="flex items-center gap-1.5 text-ev-700 font-medium">
+      <div className="flex items-center gap-1.5 text-ev-700 dark:text-ev-400 font-medium">
         <svg
           className="w-4 h-4"
           viewBox="0 0 24 24"
@@ -81,7 +83,7 @@ function RouteSummaryBanner({
         </svg>
         {formatRouteDuration(summary.durationSeconds)}
       </div>
-      <div className="flex items-center gap-1.5 text-green-700 font-medium">
+      <div className="flex items-center gap-1.5 text-green-700 dark:text-green-400 font-medium">
         <svg
           className="w-4 h-4"
           viewBox="0 0 24 24"
@@ -135,6 +137,7 @@ export function RoutingView({
   const [routeSummary, setRouteSummary] = useState<RouteSummary | null>(null);
   const [selectedSourceLoc, setSelectedSourceLoc] = useState<GeoLocation | null>(null);
   const [selectedDestLoc, setSelectedDestLoc] = useState<GeoLocation | null>(null);
+  const { resolvedTheme } = useTheme();
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -142,53 +145,58 @@ export function RoutingView({
     return () => abortRef.current?.abort();
   }, []);
 
-  const calculateRoute = useCallback(async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const { signal } = controller;
+  const calculateRoute = useCallback(
+    async (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const { signal } = controller;
 
-    setIsCalculating(true);
-    setRouteError(null);
-    setRouteCoords(null);
-    setRouteStations([]);
-    setRouteSummary(null);
+      setIsCalculating(true);
+      setRouteError(null);
+      setRouteCoords(null);
+      setRouteStations([]);
+      setRouteSummary(null);
 
-    try {
-      const sourceLoc = selectedSourceLoc ?? (await geocodeCity(sourceCity, signal));
-      const destLoc = selectedDestLoc ?? (await geocodeCity(destinationCity, signal));
+      try {
+        const sourceLoc = selectedSourceLoc ?? (await geocodeCity(sourceCity, signal));
+        const destLoc = selectedDestLoc ?? (await geocodeCity(destinationCity, signal));
 
-      if (!sourceLoc) throw new Error(`Could not find "${sourceCity}". Try a more specific name.`);
-      if (!destLoc) throw new Error(`Could not find "${destinationCity}". Try a more specific name.`);
+        if (!sourceLoc)
+          throw new Error(`Could not find "${sourceCity}". Try a more specific name.`);
+        if (!destLoc)
+          throw new Error(`Could not find "${destinationCity}". Try a more specific name.`);
 
-      const { coords, summary } = await fetchRoute(sourceLoc, destLoc, signal);
-      setRouteCoords(coords);
-      setRouteSummary(summary);
+        const { coords, summary } = await fetchRoute(sourceLoc, destLoc, signal);
+        setRouteCoords(coords);
+        setRouteSummary(summary);
 
-      const samplePoints = sampleRoutePoints(coords, 10);
-      const stations = await fetchStationsAlongRoute(samplePoints, 10, 20, signal);
-      setRouteStations(stations);
-    } catch (err) {
-      if ((err as Error).name === 'AbortError') return;
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred.';
-      setRouteError(message);
-      console.error('Routing error:', err);
-    } finally {
-      if (abortRef.current === controller) {
-        setIsCalculating(false);
+        const samplePoints = sampleRoutePoints(coords, 10);
+        const stations = await fetchStationsAlongRoute(samplePoints, 10, 20, signal);
+        setRouteStations(stations);
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+        const message = err instanceof Error ? err.message : 'An unexpected error occurred.';
+        setRouteError(message);
+        console.error('Routing error:', err);
+      } finally {
+        if (abortRef.current === controller) {
+          setIsCalculating(false);
+        }
       }
-    }
-  }, [
-    sourceCity,
-    destinationCity,
-    selectedSourceLoc,
-    selectedDestLoc,
-    setIsCalculating,
-    setRouteError,
-    setRouteCoords,
-    setRouteStations,
-  ]);
+    },
+    [
+      sourceCity,
+      destinationCity,
+      selectedSourceLoc,
+      selectedDestLoc,
+      setIsCalculating,
+      setRouteError,
+      setRouteCoords,
+      setRouteStations,
+    ],
+  );
 
   const handleSourceSelect = (loc: GeoLocation | null, label: string) => {
     setSourceCity(label);
@@ -205,11 +213,18 @@ export function RoutingView({
   return (
     <div className="space-y-6">
       {/* ── Input Panel ── */}
-      <form onSubmit={calculateRoute} className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">EV Route Planner</h2>
+      <form
+        onSubmit={calculateRoute}
+        className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
+      >
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          EV Route Planner
+        </h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Source City</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Source City
+            </label>
             <CityAutocomplete
               value={sourceCity}
               onChange={setSourceCity}
@@ -219,7 +234,9 @@ export function RoutingView({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Destination City</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Destination City
+            </label>
             <CityAutocomplete
               value={destinationCity}
               onChange={setDestinationCity}
@@ -239,7 +256,7 @@ export function RoutingView({
           </button>
 
           {routeError && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+            <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-md text-red-700 dark:text-red-400 text-sm">
               ⚠️ {routeError}
             </div>
           )}
@@ -253,64 +270,70 @@ export function RoutingView({
 
       {/* ── Map ── */}
       {hasResults && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Route Map</h2>
-          <MapContainer
-            center={[20, 0]}
-            zoom={2}
-            style={{ height: '400px', width: '100%' }}
-            scrollWheelZoom
-          >
-            <FitBounds coords={routeCoords} />
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {routeCoords && (
-              <Polyline positions={routeCoords} color="blue" weight={5} opacity={0.7}>
-                <Popup>EV Route</Popup>
-              </Polyline>
-            )}
-            {routeStations.map((station) => {
-              const status = getStationStatus(station);
-              const fast = isFastCharger(station);
-              const { addressInfo: addr } = station;
-              const icon = getStationIcon(status, fast);
-              const isOperational = status === 'operational';
-              const statusText = isOperational
-                ? 'Operational'
-                : status === 'planned'
-                  ? 'Not Operational'
-                  : 'Unknown';
-              const distanceText =
-                addr.distance != null ? `${formatDistance(addr.distance)} away` : '';
-              const connectors = station.connections.reduce((sum, c) => sum + (c.quantity ?? 1), 0);
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Route Map</h2>
+          <FullscreenMap className="h-[400px] w-full overflow-hidden rounded-lg">
+            <MapContainer
+              center={[20, 0]}
+              zoom={2}
+              style={{ height: '100%', width: '100%' }}
+              scrollWheelZoom
+            >
+              <MapResizeOnFullscreen />
+              <FitBounds coords={routeCoords} />
+              <TileLayer
+                attribution={MAP_TILE_ATTRIBUTIONS[resolvedTheme]}
+                url={MAP_TILE_URLS[resolvedTheme]}
+              />
+              {routeCoords && (
+                <Polyline positions={routeCoords} color="blue" weight={5} opacity={0.7}>
+                  <Popup>EV Route</Popup>
+                </Polyline>
+              )}
+              {routeStations.map((station) => {
+                const status = getStationStatus(station);
+                const fast = isFastCharger(station);
+                const { addressInfo: addr } = station;
+                const icon = getStationIcon(status, fast);
+                const isOperational = status === 'operational';
+                const statusText = isOperational
+                  ? 'Operational'
+                  : status === 'planned'
+                    ? 'Not Operational'
+                    : 'Unknown';
+                const distanceText =
+                  addr.distance != null ? `${formatDistance(addr.distance)} away` : '';
+                const connectors = station.connections.reduce(
+                  (sum, c) => sum + (c.quantity ?? 1),
+                  0,
+                );
 
-              return (
-                <Marker
-                  key={station.id}
-                  position={[addr.lat, addr.lon]}
-                  icon={icon}
-                  aria-label={`${addr.title}, ${statusText}, ${fast ? 'Fast charging, ' : ''}${distanceText}, ${connectors} connectors`}
-                >
-                  <Tooltip direction="top" offset={[0, -10]} sticky className="station-tooltip">
-                    <StationCardSummary station={station} />
-                  </Tooltip>
-                  <Popup maxWidth={300} className="station-popup" autoPan={false}>
-                    <StationCardSummary station={station} />
-                    <div className="pt-3 border-t border-gray-200">
-                      <button
-                        onClick={() => onSelectStation?.(station)}
-                        className="w-full text-left text-ev-600 hover:text-ev-700 underline"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MapContainer>
+                return (
+                  <Marker
+                    key={station.id}
+                    position={[addr.lat, addr.lon]}
+                    icon={icon}
+                    aria-label={`${addr.title}, ${statusText}, ${fast ? 'Fast charging, ' : ''}${distanceText}, ${connectors} connectors`}
+                  >
+                    <Tooltip direction="top" offset={[0, -10]} sticky className="station-tooltip">
+                      <StationCardSummary station={station} />
+                    </Tooltip>
+                    <Popup maxWidth={300} className="station-popup" autoPan={false}>
+                      <StationCardSummary station={station} />
+                      <div className="pt-3 border-t border-gray-200 dark:border-gray-800">
+                        <button
+                          onClick={() => onSelectStation?.(station)}
+                          className="w-full text-left text-ev-600 dark:text-ev-400 hover:text-ev-700 underline"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+            </MapContainer>
+          </FullscreenMap>
         </div>
       )}
 
@@ -320,7 +343,7 @@ export function RoutingView({
         routeStations.length === 0 &&
         sourceCity &&
         destinationCity && (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-gray-400 dark:text-gray-500">
             <p>
               No charging stations found along the route. Try adjusting the search radius or check
               the route.

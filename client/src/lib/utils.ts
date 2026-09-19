@@ -7,9 +7,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const STATUS_CONFIG = {
-  operational: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50', label: 'Operational', badge: 'bg-green-100 text-green-800' },
-  planned:     { icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-50',  label: 'Not operational', badge: 'bg-amber-100 text-amber-800' },
-  unknown:     { icon: HelpCircle,  color: 'text-gray-400',  bg: 'bg-gray-50',   label: 'Unknown',   badge: 'bg-gray-100 text-gray-600' },
+  operational: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/30', label: 'Operational', badge: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' },
+  planned:     { icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/30',  label: 'Not operational', badge: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' },
+  unknown:     { icon: HelpCircle,  color: 'text-gray-400',  bg: 'bg-gray-50 dark:bg-gray-800/50',   label: 'Unknown',   badge: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
 } as const;
 
 export function getStationStatus(station: ChargingStation): 'operational' | 'planned' | 'unknown' {
@@ -61,13 +61,13 @@ export function filterStations(stations: ChargingStation[], filter: FilterType):
 
 export function getConnectorBadgeColor(title: string): string {
   const t = title.toLowerCase();
-  if (t.includes('ccs') || t.includes('combo')) return 'bg-blue-100 text-blue-800';
-  if (t.includes('chademo')) return 'bg-purple-100 text-purple-800';
-  if (t.includes('type 2') || t.includes('iec')) return 'bg-green-100 text-green-800';
-  if (t.includes('type 1')) return 'bg-yellow-100 text-yellow-800';
-  if (t.includes('tesla')) return 'bg-red-100 text-red-800';
-  if (t.includes('schuko') || t.includes('domestic')) return 'bg-gray-100 text-gray-700';
-  return 'bg-gray-100 text-gray-700';
+  if (t.includes('ccs') || t.includes('combo')) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300';
+  if (t.includes('chademo')) return 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300';
+  if (t.includes('type 2') || t.includes('iec')) return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
+  if (t.includes('type 1')) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300';
+  if (t.includes('tesla')) return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
+  if (t.includes('schuko') || t.includes('domestic')) return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+  return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 }
 
 export function getTotalConnectors(station: ChargingStation): number {

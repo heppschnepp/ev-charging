@@ -33,8 +33,8 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border transition-all duration-200',
-        expanded ? 'border-ev-200 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:shadow-sm',
+        'bg-white dark:bg-gray-900 rounded-xl border transition-all duration-200',
+        expanded ? 'border-ev-200 dark:border-ev-800 shadow-md' : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm',
       )}
     >
       {/* Header */}
@@ -50,10 +50,10 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-gray-900 text-sm leading-snug truncate">{addr.title}</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-snug truncate">{addr.title}</h3>
             <div className="flex items-center gap-1.5 shrink-0">
               {fast && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-semibold">
                   <Zap size={10} />
                   Fast
                 </span>
@@ -64,24 +64,24 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
             </div>
           </div>
 
-          <p className="text-xs text-gray-600 mt-0.5 truncate">{addressStr}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">{addressStr}</p>
           {operator && (
-            <p className="text-xs text-gray-600 mt-0.5 truncate">Operator: {operator.title}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">Operator: {operator.title}</p>
           )}
 
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             {addr.distance != null && (
-              <span className="inline-flex items-center gap-1 text-xs text-gray-600">
+              <span className="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
                 <MapPin size={12} /> {formatDistance(addr.distance)}
               </span>
             )}
             {connections.length > 0 && totalConnectors > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs text-gray-600">
+              <span className="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
                 <Plug size={12} /> {totalConnectors} connector{totalConnectors !== 1 ? 's' : ''}
               </span>
             )}
             {maxPower > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-ev-700">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-ev-700 dark:text-ev-400">
                 <Zap size={12} /> {formatPower(maxPower)} max
               </span>
             )}
@@ -97,7 +97,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
             }}
             className={cn(
               'p-1.5 rounded-lg transition-colors',
-              isFavorite ? 'text-red-500 bg-red-50' : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100',
+              isFavorite ? 'text-red-500 bg-red-50 dark:bg-red-900/30' : 'text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800',
             )}
             title={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
           >
@@ -105,7 +105,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite }: Props) {
           </button>
           <ChevronDown
             size={16}
-            className={cn('text-gray-500 transition-transform', expanded && 'rotate-180')}
+            className={cn('text-gray-500 dark:text-gray-400 transition-transform', expanded && 'rotate-180')}
           />
         </div>
       </div>

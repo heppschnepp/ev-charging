@@ -120,7 +120,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-visible">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-visible">
         {/* Main search row */}
         <div className="flex items-center px-4 py-3 gap-2 relative">
           {/* Location button */}
@@ -131,8 +131,8 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
             className={cn(
               'p-2.5 rounded-lg transition-colors shrink-0',
               isFetchingLocation
-                ? 'bg-ev-100 text-ev-600 animate-pulse'
-                : 'text-gray-400 hover:bg-gray-100',
+                ? 'bg-ev-100 dark:bg-ev-900/30 text-ev-600 animate-pulse'
+                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
             )}
             title="Use my location"
             aria-label="Use my location"
@@ -143,7 +143,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
               <MapPin size={20} />
             )}
           </button>
-          <Search className="text-gray-400 shrink-0" size={20} />
+          <Search className="text-gray-400 dark:text-gray-500 shrink-0" size={20} />
           <div className="relative flex-1">
             <CityAutocomplete
               value={city}
@@ -161,7 +161,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                   setCity('');
                   inputRef.current?.focus();
                 }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600"
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 aria-label="Clear search"
               >
                 <X size={16} />
@@ -173,7 +173,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
             onClick={() => setShowOptions(!showOptions)}
             className={cn(
               'p-2.5 rounded-lg transition-colors shrink-0',
-              showOptions ? 'bg-ev-100 text-ev-600' : 'text-gray-400 hover:bg-gray-100',
+              showOptions ? 'bg-ev-100 dark:bg-ev-900/30 text-ev-600' : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
             )}
             title="Search options"
             aria-label="Toggle search options"
@@ -186,7 +186,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
             className={cn(
               'px-5 py-2.5 rounded-xl font-semibold text-base transition-all shrink-0',
               isLoading || (!city.trim() && !isFetchingLocation)
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                 : 'bg-ev-600 text-white hover:bg-ev-700 active:bg-ev-800',
             )}
           >
@@ -196,17 +196,17 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
 
         {/* Location error message */}
         {locationError && (
-          <div className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded-b-md">
+          <div className="px-4 py-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-b-md">
             ⚠️ {locationError}
           </div>
         )}
 
         {/* Options panel */}
         {showOptions && (
-          <div className="border-t border-gray-100 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-2">
-                Search radius: <span className="text-gray-900 font-semibold">{distance} km</span>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-2">
+                Search radius: <span className="text-gray-900 dark:text-gray-100 font-semibold">{distance} km</span>
               </label>
               <input
                 type="range"
@@ -217,14 +217,14 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                 onChange={(e) => setDistance(Number(e.target.value))}
                 className="w-full accent-ev-600 h-5"
               />
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
                 <span>1 km</span>
                 <span>100 km</span>
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-2">
-                Min Power (KW): <span className="text-gray-900 font-semibold">{power}</span>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-2">
+                Min Power (KW): <span className="text-gray-900 dark:text-gray-100 font-semibold">{power}</span>
               </label>
               <input
                 type="range"
@@ -235,14 +235,14 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                 onChange={(e) => setPower(Number(e.target.value))}
                 className="w-full accent-ev-600 h-5"
               />
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
                 <span>0 KW</span>
                 <span>1000 KW</span>
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-2">
-                Max results: <span className="text-gray-900 font-semibold">{maxResults}</span>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-2">
+                Max results: <span className="text-gray-900 dark:text-gray-100 font-semibold">{maxResults}</span>
               </label>
               <input
                 type="range"
@@ -253,13 +253,13 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                 onChange={(e) => setMaxResults(Number(e.target.value))}
                 className="w-full accent-ev-600 h-5"
               />
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1">
                 <span>5</span>
                 <span>100</span>
               </div>
             </div>
             <div className="md:col-span-2">
-              <label className="text-xs font-medium text-gray-500 block mb-2">
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-2">
                 Operator (optional)
               </label>
               <input
@@ -267,7 +267,7 @@ export function SearchBar({ onSearch, isLoading, history = [] }: Props) {
                 value={operator}
                 onChange={(e) => setOperator(e.target.value)}
                 placeholder="Filter by operator name…"
-                className="w-full text-gray-900 placeholder-gray-400 text-base outline-none bg-transparent border border-gray-200 rounded-lg px-3 py-2.5"
+                className="w-full text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-base outline-none bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2.5"
               />
             </div>
           </div>

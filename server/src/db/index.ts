@@ -309,8 +309,8 @@ export function updateVehicle(
     variantName?: string | null;
     modelYear?: number | null;
     rangeKm?: number;
-    chargeTime10To80Min?: number | null;
-    chargeTime10To100Min?: number | null;
+    chargeTime10to80Min?: number | null;
+    chargeTime10to100Min?: number | null;
   },
 ) {
   const current = db.prepare(`SELECT * FROM vehicles WHERE id = ?`).get(id) as
@@ -329,8 +329,8 @@ export function updateVehicle(
     patch.variantName === undefined ? current.variant_name : patch.variantName,
     patch.modelYear === undefined ? current.model_year : patch.modelYear,
     patch.rangeKm ?? current.range_km,
-    patch.chargeTime10To80Min === undefined ? current.charge_time_10_80_min : patch.chargeTime10To80Min,
-    patch.chargeTime10To100Min === undefined ? current.charge_time_10_100_min : patch.chargeTime10To100Min,
+    patch.chargeTime10to80Min === undefined ? current.charge_time_10_80_min : patch.chargeTime10to80Min,
+    patch.chargeTime10to100Min === undefined ? current.charge_time_10_100_min : patch.chargeTime10to100Min,
     id,
   );
   return true;

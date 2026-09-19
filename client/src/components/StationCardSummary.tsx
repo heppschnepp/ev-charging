@@ -14,19 +14,19 @@ export function StationCardSummary({ station }: StationCardSummaryProps) {
   const { addressInfo: addr } = station;
   
   // Determine status color with improved contrast
-  let statusColor = 'text-green-700';
-  if (status === 'planned') statusColor = 'text-red-700';
-  else if (status === 'unknown') statusColor = 'text-gray-700';
+  let statusColor = 'text-green-700 dark:text-green-400';
+  if (status === 'planned') statusColor = 'text-red-700 dark:text-red-400';
+  else if (status === 'unknown') statusColor = 'text-gray-700 dark:text-gray-300';
   
   const totalConnectors = station.connections.reduce((sum, c) => sum + (c.quantity ?? 1), 0);
 
   return (
-    <div className="px-2 py-1 bg-white rounded-lg shadow-md text-sm space-y-1.5">
+    <div className="px-2 py-1 bg-white dark:bg-gray-900 rounded-lg shadow-md text-sm space-y-1.5">
       <div className="font-medium">{addr.title}</div>
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1">
           {fast && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+            <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">
               <Zap size={10} /> Fast
             </span>
           )}
@@ -35,12 +35,12 @@ export function StationCardSummary({ station }: StationCardSummaryProps) {
           </span>
         </div>
         {addr.distance != null && (
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-gray-600 dark:text-gray-300">
             <MapPin size={12} /> {formatDistance(addr.distance)} away
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2 text-xs text-gray-600">
+      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
         <MapPin size={12} /> {totalConnectors} connector{totalConnectors !== 1 ? 's' : ''}
       </div>
     </div>

@@ -16,7 +16,8 @@ A full-stack monorepo app to find EV charging stations near any city, powered by
 - ⚡ Filter by: all / operational / fast charge (≥50 kW) / free
 - ❤️ Save favourite stations (persisted in SQLite)
 - 🚗 EV car inventory (Settings → Electric cars): search/select from the EVDB catalogue (auto-filled brand, model, WLTP range, charge times 10→80% and 10→100%) or add cars manually; persisted in SQLite
-- 🔋 EV Charging Trip Planner: pick a car, start charge, charge threshold (10%/20%) and target (80%/100%), then get charge stops along a route — plan map, stop list with charging minutes, and total trip time
+- 🌓 Light / Dark / System theme switcher (Settings → Appearance), persisted in `localStorage`; follows the OS preference in System mode and switches maps to dark tiles
+- 🔋 EV Charging Trip Planner: pick a car, start charge (default 20%), charge target (80%/100%) and preferred operator, then compare two reserve scenarios side by side — charge when below **20%** vs **10%** — with a toggle that drives the plan map and stop list (charging minutes, arrival SoC, total trip time)
 - 🕐 Search history with one-click re-search
 - 💾 Server-side caching (1 hour TTL) to avoid hammering APIs
 - 📱 Responsive layout with sticky sidebar

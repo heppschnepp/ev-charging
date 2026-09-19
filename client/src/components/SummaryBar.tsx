@@ -15,26 +15,26 @@ export function SummaryBar({ stations, location }: Props) {
   const city = location.displayName.split(',')[0];
 
   const stats = [
-    { icon: Plug, label: 'Stations', value: stations.length, color: 'text-gray-700' },
-    { icon: CheckCircle, label: 'Operational', value: operational, color: 'text-green-600' },
-    { icon: Zap, label: 'Fast charge', value: fastCount, color: 'text-blue-600' },
-    { icon: Plug, label: 'Connectors', value: totalConnectors, color: 'text-purple-600' },
+    { icon: Plug, label: 'Stations', value: stations.length, color: 'text-gray-700 dark:text-gray-300' },
+    { icon: CheckCircle, label: 'Operational', value: operational, color: 'text-green-600 dark:text-green-400' },
+    { icon: Zap, label: 'Fast charge', value: fastCount, color: 'text-blue-600 dark:text-blue-400' },
+    { icon: Plug, label: 'Connectors', value: totalConnectors, color: 'text-purple-600 dark:text-purple-400' },
   ];
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MapPin size={16} className="text-ev-600" />
-          <span className="font-semibold text-gray-900">{city}</span>
+          <MapPin size={16} className="text-ev-600 dark:text-ev-400" />
+          <span className="font-semibold text-gray-900 dark:text-gray-100">{city}</span>
         </div>
       </div>
       <div className="grid grid-cols-4 gap-2">
         {stats.map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-200 p-3 text-center">
+          <div key={label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 text-center">
             <Icon size={16} className={`${color} mx-auto mb-1`} />
             <p className={`text-xl font-bold ${color}`}>{value}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{label}</p>
           </div>
         ))}
       </div>

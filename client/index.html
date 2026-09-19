@@ -12,6 +12,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EV Charging Finder</title>
     <meta name="theme-color" content="#10b981" />
+    <script>
+      (function () {
+        try {
+          var root = document.documentElement;
+          var stored = localStorage.getItem('ev-charging-theme');
+          var dark =
+            stored === 'dark' ||
+            (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          root.classList.toggle('dark', dark);
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', dark ? '#0a0a0a' : '#10b981');
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

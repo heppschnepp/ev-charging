@@ -128,12 +128,12 @@ export function CityAutocomplete({
         }}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full text-gray-900 placeholder-gray-400 text-base outline-none bg-transparent pr-8 ${inputClassName}`}
+        className={`w-full text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-base outline-none bg-transparent pr-8 ${inputClassName}`}
         autoComplete="off"
         inputMode="search"
       />
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto">
           {suggestions.map((s, i) => (
             <button
               key={s.label}
@@ -144,7 +144,7 @@ export function CityAutocomplete({
               }}
               onMouseEnter={() => setHighlightedIndex(i)}
               className={`w-full text-left px-4 py-3 text-base flex items-center gap-2 ${
-                i === highlightedIndex ? 'bg-ev-50 text-ev-700' : 'text-gray-700 hover:bg-gray-50'
+                i === highlightedIndex ? 'bg-ev-50 dark:bg-ev-900/30 text-ev-700 dark:text-ev-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
             >
               <Search size={16} className="text-gray-400 shrink-0" />
