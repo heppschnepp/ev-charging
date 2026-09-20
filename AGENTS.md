@@ -48,7 +48,7 @@ Note: `.plans/` is gitignored — plan files are local working notes, never comm
 - `pnpm dev` — client (Vite, :5173, proxies `/api` → :3001) + server (`tsx watch src/index.ts`, :3001). Individually: `pnpm client:dev`, `pnpm server:dev`. Stop with `lsof -ti:3001,5173 | xargs kill -9`.
 - `pnpm type-check`, `pnpm lint`, `pnpm build` — run both packages in parallel; these are the **only** checks that exist (no test suite).
 - `pnpm format` / `format:check` — Prettier (single quotes, trailing commas, 100 cols, at root `.prettierrc`).
-- Production: `pnpm build`, then `pnpm server:start` (= `node dist/index.js`). Express serves the API only — `GET /` returns 404; the SPA is `client/dist` and must be hosted separately.
+- Production: `pnpm build`, then `pnpm server:start` (= `node dist/index.js`). The server serves `client/dist` statically when present (`CLIENT_DIST` env override; default `<server>/../client/dist`), with an SPA fallback for non-`/api` GETs and JSON 404s elsewhere. Without a built client it runs API-only (`GET /` → 404 JSON; use the Vite dev server).
 
 ## Layout & wiring (know before you edit)
 

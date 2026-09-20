@@ -1,6 +1,4 @@
-Current time: 2026-05-30T15:38:32+02:00
-Working directory: /Users/peterdiel/workspaces/playground/ev-charging
-Workspace root folder: /Users/peterdiel/workspaces/playground/ev-charging
+# HTTPS for iPhone Geolocation
 
 To test geolocation on iPhone (requires HTTPS for location permissions):
 

@@ -102,13 +102,28 @@ ev-charging/
 | GET    | `/api/favorites`            | List favourites          |
 | POST   | `/api/favorites`            | Add a favourite          |
 | DELETE | `/api/favorites/:stationId` | Remove a favourite       |
+| DELETE | `/api/favorites`            | Clear all favourites     |
 | GET    | `/api/history`              | Recent search history    |
+| DELETE | `/api/history`              | Clear search history     |
 | GET    | `/api/cars`                 | List EV car inventory    |
 | GET    | `/api/cars/search?q=`       | Search EVDB catalogue    |
 | POST   | `/api/cars`                 | Add a car (catalogue or manual; charge times auto-filled from EVDB for catalogue cars) |
 | PATCH  | `/api/cars/:id`             | Edit range / charge times |
 | DELETE | `/api/cars/:id`             | Remove a car             |
 | GET    | `/health`                   | Health check             |
+
+## Documentation
+
+See [INDEX.md](INDEX.md) for a master index of all project docs:
+
+| Doc | Purpose |
+|-----|---------|
+| [README_coordinates.md](README_coordinates.md) | Finding lat/lon coordinates for searches |
+| [README_curl.md](README_curl.md) | OCM API curl examples |
+| [README_db.md](README_db.md) | SQLite database schema |
+| [README_https.md](README_https.md) | HTTPS setup for iPhone geolocation |
+| [README_nas.md](README_nas.md) | Deploying to a Synology NAS |
+| [README_schema.md](README_schema.md) | OCM `/poi` response schema |
 
 ## Environment variables
 
