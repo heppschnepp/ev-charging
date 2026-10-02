@@ -53,11 +53,11 @@ Note: `.plans/` is gitignored — plan files are local working notes, never comm
 ## Layout & wiring (know before you edit)
 
 - `@/*` imports map to `client/src/*` (client tsconfig `paths` + `vite.config.ts` alias). The server uses plain relative `../` imports — no alias.
-- OCM station types are duplicated: `server/src/types/index.ts` is the source, `client/src/types/index.ts` mirrors it — keep them in sync.
+- Shared types: `packages/shared-types/` (`@ev-charging/shared-types`) exports OCM types; `server/src/types/index.ts` and `client/src/types/index.ts` re-export from it (no duplication).
 - SQLite schema lives in code: `server/src/db/index.ts` runs `CREATE TABLE IF NOT EXISTS` + guarded `ALTER TABLE … ADD COLUMN` migrations inside `initDb()` on every server boot. Never hand-edit `server/data/ev-cache.db`; delete the file to reset.
 - Client API layer is `client/src/lib/api.ts` (fetch wrapper matching the `server/src/routes/*` REST routes). External services: Nominatim (geocoding), OSRM public router (`router.project-osrm.org`), OCM (stations — needs `OCM_API_KEY` set in `server/.env`, copy `server/.env.example`), EVDB catalogue (`gaia-charge.github.io/evdb/v1`).
 - Charge-planning entry points: `client/src/utils/chargePlan.ts` (pure logic) + `client/src/components/ChargePlanView.tsx` (UI). Route math: `client/src/utils/routingUtils.ts`.
-- `.env` is gitignored; the OCM key is required for live station data (cached DB responses work without it).
+- `.env` is gitignored; the OCM key is required for live station data (cached DB responses work without it); monorepo includes `packages/*`.
 
 ## Verification & smoke tests (no test runner)
 
@@ -76,3 +76,4 @@ Note: `.plans/` is gitignored — plan files are local working notes, never comm
 - `charge_time_10_100_min` (DB + `Car`) stores the EVDB **0→100** field (`dc_charge_time_0_100_min`) as a documented estimate — EVDB has no true 10→100 time.
 - Operator preference = case-insensitive substring of `operator.title`, identical semantics in client (`matchesOperator` / `rankStations`) and the server's `?operator=` station filter.
 - OCM reports `statusTitle: "Operational"` (not live occupancy). "n free" is only shown when a connection's `statusTitle` contains "Available" (`availableConnectors`); otherwise the connector totals are shown.
+- Server uses relative imports only; no path alias.

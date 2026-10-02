@@ -16,7 +16,8 @@
     "dotenv": "^16.4.0",
     "express": "^4.19.0",
     "node-fetch": "^3.3.0",
-    "zod": "^3.23.0"
+    "zod": "^3.23.0",
+    "@ev-charging/shared-types": "workspace:*"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.0",
